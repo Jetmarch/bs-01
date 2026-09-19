@@ -1,0 +1,24 @@
+#version 430
+
+struct Position
+{
+    float x;
+    float y;
+};
+
+layout(std430, binding = 0) buffer Positions
+{
+    Position positions[];
+};
+
+layout(local_size_x = 256) in;
+
+void main()
+{
+    uint id = gl_GlobalInvocationID.x;
+
+    if (id >= 10000)
+        return;
+
+    positions[id].x += 1.0;
+}
