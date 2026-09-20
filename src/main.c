@@ -1,14 +1,21 @@
 #include <stddef.h>
 
 #include <raylib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "rlgl.h"
 #include "external/glad.h"
 
 #define ENTITY_COUNT 10000
 
+#define SCREEN_WIDTH 1240
+#define SCREEN_HEIGHT 720
 
-static const char *compute_shader_path = "assets/shaders/move.comp";
+#define CELL_SIZE 100
+
+
+// static const char *compute_shader_path = "assets/shaders/move.comp";
 
 
 typedef struct
@@ -17,119 +24,114 @@ typedef struct
     float y;
 } Position;
 
-typedef void (*GLGenBuffersProc)(
-    int n,
-    unsigned int *buffers
-);
 
-typedef void (*GLBindBufferProc)(
-    unsigned int target,
-    unsigned int buffer
-);
+enum CellType {
+    EMPTY_CELL,
+    RED_CELL,
+    BLUE_CELL,
+    GREEN_CELL,
+    YELLOW_CELL
+};
 
-typedef void (*GLBufferDataProc)(
-    unsigned int target,
-    long long size,
-    const void *data,
-    unsigned int usage
-);
+typedef struct {
+    Rectangle rect;
+    enum CellType type;
+} Cell;
 
-typedef GLuint (*GLCreateShaderProc)(GLenum type);
-typedef void (*GLShaderSourceProc)(
-    GLuint shader,
-    GLsizei count,
-    const char **string,
-    const GLint *length
-);
-typedef void (*GLCompileShaderProc)(GLuint shader);
-typedef void (*GLGetShaderivProc)(
-    GLuint shader,
-    GLenum pname,
-    GLint *params
-);
-typedef void (*GLGetShaderInfoLogProc)(
-    GLuint shader,
-    GLsizei maxLength,
-    GLsizei *length,
-    char *infoLog
-);
+typedef struct {
+    int width;
+    int height;
+    int count_of_cells;
+    Cell* cells;
+} Grid;
 
-typedef GLuint (*GLCreateProgramProc)(void);
-typedef void (*GLAttachShaderProc)(
-    GLuint program,
-    GLuint shader
-);
-typedef void (*GLLinkProgramProc)(GLuint program);
-typedef void (*GLGetProgramivProc)(
-    GLuint program,
-    GLenum pname,
-    GLint *params
-);
-typedef void (*GLGetProgramInfoLogProc)(
-    GLuint program,
-    GLsizei maxLength,
-    GLsizei *length,
-    char *infoLog
-);
-typedef void (*GLUseProgramProc)(GLuint program);
+
+Cell* GetCellAt(Grid* grid, int x, int y)
+{
+    return &grid->cells[y + grid->width + x];
+}
+
+//Wrap around lookup
+Cell* GetCellAtWrapAround(Grid* grid, int x, int y)
+{
+    int t_x = (x + grid->width) % grid->width;
+    int t_y = (y + grid->height) % grid->height;
+
+    return GetCellAt(grid, t_x, t_y);
+}
+
+Color SolveCellColor(Cell* cell)
+{
+    switch (cell->type)
+    {
+        case EMPTY_CELL:
+            return DARKGRAY;
+        case RED_CELL:
+           return RED;
+        case BLUE_CELL:
+            return BLUE;
+        case GREEN_CELL:
+            return GREEN;
+        case YELLOW_CELL:
+            return YELLOW;
+    }
+}
+
+void Draw2DGrid(Grid* grid)
+{
+    for(int i = 0; i < grid->count_of_cells; i++)
+    {
+        Cell* cell = &grid->cells[i];
+
+
+        DrawRectangle(cell->rect.x, cell->rect.y, CELL_SIZE, CELL_SIZE, SolveCellColor(cell));
+    }
+}
 
 
 
 int main(void)
 {
-
-    const int screen_width = 800;
-    const int screen_height = 450;
+    const int screen_width = SCREEN_WIDTH;
+    const int screen_height = SCREEN_HEIGHT;
+    const int max_cells = 9;
+    const int grid_width = 3;
+    const int grid_height = 3;
 
     InitWindow(screen_width, screen_height, "bs-01");
 
-    int groups = (ENTITY_COUNT + 255) / 256;
-
     SetTargetFPS(60);
 
-    Position positions[ENTITY_COUNT];
+    Cell* cells = malloc(sizeof(Cell) * max_cells);
 
-    for(int i = 0; i < ENTITY_COUNT; i++)
+    for(int i = 0; i < max_cells; i++)
     {
-        positions[i].x = (float)i;
-        positions[i].y = 0.0f;
+
+        if (i % 2 == 0) {
+            cells[i].type = EMPTY_CELL;
+        }
+        else {
+            cells[i].type = RED_CELL;
+        }
+        cells[i].rect.x = (i + grid_width) % grid_width;
+        cells[i].rect.y = i;
+        TraceLog(LOG_INFO, "Cell is at x: %i, y: %i, type: %i", cells[i].rect.x, cells[i].rect.y, cells[i].type);
     }
 
-
-    if(!glGenBuffers || !glBindBuffer || !glBufferData)
-    {
-        TraceLog(LOG_ERROR, "Failed to load OpenGL functions");
-        CloseWindow();
-        return 1;
-    }
-
-    unsigned int ssbo;
-
-    glad_glGenBuffers(1, &ssbo);
-
-    glad_glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-
-    glad_glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(positions), positions, GL_DYNAMIC_DRAW);
-
-    // Shader shader = LoadShader(NULL, fragment_shader_path);
-    //
-
-    printf("Size: %zu bytes\n", sizeof(positions));
+    Grid grid = {
+        .width = grid_width,
+        .height = grid_height,
+        .count_of_cells = grid_width * grid_height,
+        .cells = cells
+    };
 
     while(!WindowShouldClose())
     {
         BeginDrawing();
 
-        ClearBackground(BLACK);
+        ClearBackground(BLUE);
 
-        // BeginShaderMode(shader);
-
-        // DrawRectangle(300, 150, 200, 150, RED);
-
-        // EndShaderMode();
-
-
-        DrawText("SSBO created", 20, 20, 30, WHITE);
+        Draw2DGrid(&grid);
 
         EndDrawing();
     }
