@@ -2,6 +2,7 @@
 
 #include "rlgl.h"
 
+#include <stdint.h>
 #include <stdlib.h>     // Required for: NULL
 
 // IMPORTANT: This must match gol*.glsl GOL_WIDTH constant
@@ -40,7 +41,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rlgl compute");
 
-    const Vector2 resolution = { (float)screenWidth, (float)screenHeight };
+    const Vector2 resolution = { (float)64, (float)64 };
     unsigned int brushSize = 8;
 
     // Game of Life logic compute shader
@@ -84,12 +85,14 @@ int main(void)
             && (transfertBuffer.count < MAX_BUFFERED_TRANSFERTS))
         {
             // Buffer a new command
-            transfertBuffer.commands[transfertBuffer.count].x = GetMouseX() - brushSize/2;
-            transfertBuffer.commands[transfertBuffer.count].y = GetMouseY() - brushSize/2;
+            transfertBuffer.commands[transfertBuffer.count].x = (float)GetMouseX() / GetScreenWidth() * resolution.x - brushSize/2;
+            transfertBuffer.commands[transfertBuffer.count].y = (float)GetMouseY() / GetScreenHeight() * resolution.y - brushSize/2;
             transfertBuffer.commands[transfertBuffer.count].w = brushSize;
             transfertBuffer.commands[transfertBuffer.count].enabled = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
             transfertBuffer.count++;
         }
+
+
         else if (transfertBuffer.count > 0)  // Process transfert buffer
         {
             // Send SSBO buffer to GPU
