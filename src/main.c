@@ -1,3 +1,5 @@
+#define RAYLIB_NUKLEAR_IMPLEMENTATION
+
 #include <stddef.h>
 
 #include <raylib.h>
@@ -6,6 +8,12 @@
 #include <stdlib.h>
 #include "rlgl.h"
 #include "external/glad.h"
+
+
+#include <raylib-nuklear/include/raylib-nuklear.h>
+
+
+
 
 #define ENTITY_COUNT 10000
 
@@ -165,6 +173,9 @@ int main(void)
     const int grid_width = 3;
     const int grid_height = 3;
 
+    const int font_size = 14;
+    struct nk_context *ctx = InitNuklear(font_size);
+
     InitWindow(screen_width, screen_height, "bs-01");
 
     SetTargetFPS(60);
@@ -235,6 +246,8 @@ int main(void)
 
     while(!WindowShouldClose())
     {
+        UpdateNuklear(ctx);
+
         Vector2 mouse_pos = GetMousePosition();
 
         Cell* cell = NULL;
@@ -256,6 +269,14 @@ int main(void)
             }
         }
 
+        if (nk_begin(ctx, "Nuklear", nk_rect(100, 100, 220, 220),
+                NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
+            nk_layout_row_static(ctx, 50, 150, 1);
+            if (nk_button_label(ctx, "Button")) {
+                // Button was clicked!
+            }
+        }
+        nk_end(ctx);
 
 
         // There will be logic for updating the grid by the rules of the game of life
@@ -274,8 +295,14 @@ int main(void)
             DrawCellButtons(buttons, CELL_TYPE_COUNT);
         }
 
+        DrawNuklear(ctx);
+
         EndDrawing();
     }
+
+    free(cells);
+
+    UnloadNuklear(ctx);
 
     CloseWindow();
 
