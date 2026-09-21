@@ -15,36 +15,36 @@
 #define CELL_SIZE 100
 
 
-// static const char *compute_shader_path = "assets/shaders/move.comp";
-
-
-typedef struct
-{
-    float x;
-    float y;
-} Position;
-
-
 enum CellType {
     EMPTY_CELL,
     RED_CELL,
     BLUE_CELL,
     GREEN_CELL,
-    YELLOW_CELL
+    YELLOW_CELL,
+
+    CELL_TYPE_COUNT
 };
 
-typedef struct {
+typedef struct Cell {
     Rectangle rect;
+    bool is_selected;
     enum CellType type;
 } Cell;
 
-typedef struct {
+typedef struct Grid {
     int width;
     int height;
     int count_of_cells;
+    Vector2 origin;
     Cell* cells;
 } Grid;
 
+typedef struct Button {
+    Rectangle rect;
+    Vector2 origin;
+    float rotation;
+    Color color;
+} Button;
 
 Cell* GetCellAt(Grid* grid, int x, int y)
 {
@@ -60,8 +60,13 @@ Cell* GetCellAtWrapAround(Grid* grid, int x, int y)
     return GetCellAt(grid, t_x, t_y);
 }
 
-Color SolveCellColor(Cell* cell)
+Color SolveCellColor(const Cell* cell)
 {
+    if (cell->is_selected)
+    {
+        return LIGHTGRAY;
+    }
+
     switch (cell->type)
     {
         case EMPTY_CELL:
@@ -74,6 +79,21 @@ Color SolveCellColor(Cell* cell)
             return GREEN;
         case YELLOW_CELL:
             return YELLOW;
+        case CELL_TYPE_COUNT:
+            return LIGHTGRAY;
+    }
+}
+
+const char *CellTypeToString(enum CellType type)
+{
+    switch (type)
+    {
+        case EMPTY_CELL:  return "empty";
+        case RED_CELL:    return "red";
+        case BLUE_CELL:   return "blue";
+        case GREEN_CELL:  return "green";
+        case YELLOW_CELL: return "yellow";
+        default:          return "unknown";
     }
 }
 
@@ -82,9 +102,56 @@ void Draw2DGrid(Grid* grid)
     for(int i = 0; i < grid->count_of_cells; i++)
     {
         Cell* cell = &grid->cells[i];
+        DrawRectanglePro(cell->rect, grid->origin, 0.0, SolveCellColor(cell));
+    }
+}
 
 
-        DrawRectangle(cell->rect.x, cell->rect.y, CELL_SIZE, CELL_SIZE, SolveCellColor(cell));
+void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_height)
+{
+    // Draw cell container
+    int w = 250;
+    int h = 100;
+    int x = screen_width - w;
+    int y = screen_height - h;
+    DrawRectangle(x, y, w, h, LIGHTGRAY);
+
+    char text[64];
+
+    snprintf(
+        text,
+        sizeof(text),
+        "Cell is %s",
+        CellTypeToString(cell->type)
+    );
+
+    int text_size = MeasureText(text, 20);
+    DrawText(text, x + text_size - 50, y + 35, 20, BLACK);
+}
+
+
+void DrawCellButtons(Button* buttons, int size)
+{
+    for(int i = 0; i < size; i++)
+    {
+        Button* button = &buttons[i];
+
+        if(CheckCollisionPointRec(GetMousePosition(), button->rect))
+        {
+            button->color = RED;
+        }
+        else
+        {
+            int color_modifier = i * 15;
+            button->color = (Color){
+                .r = 150 - color_modifier,
+                .g = 150 - color_modifier,
+                .b = 150 - color_modifier,
+                .a = 255
+            };
+        }
+
+        DrawRectanglePro(button->rect, button->origin, 0, button->color);
     }
 }
 
@@ -104,39 +171,111 @@ int main(void)
 
     Cell* cells = malloc(sizeof(Cell) * max_cells);
 
-    for(int i = 0; i < max_cells; i++)
+    int n_i = 0;
+    Cell* cell = NULL;
+    for (int y = 0; y < grid_height; y++)
     {
+        for(int x = 0; x < grid_width; x++)
+        {
+            n_i =  y + grid_width * x;
+            cell = &cells[n_i];
 
-        if (i % 2 == 0) {
-            cells[i].type = EMPTY_CELL;
+            if (n_i % 2 == 0) {
+                cell->type = EMPTY_CELL;
+            }
+            else {
+                cell->type = RED_CELL;
+            }
+
+            cell->rect.x = x * CELL_SIZE;
+            cell->rect.y = y * CELL_SIZE;
+            cell->rect.width = (float)CELL_SIZE;
+            cell->rect.height = (float)CELL_SIZE;
+
+            // TraceLog(LOG_INFO, "Cell x: %.0f y: %.0f, w: %.0f, h: %.0f type: %i", cell->rect.x, cell->rect.y, cell->rect.width, cell->rect.height, cell->type);
         }
-        else {
-            cells[i].type = RED_CELL;
-        }
-        cells[i].rect.x = (i + grid_width) % grid_width;
-        cells[i].rect.y = i;
-        TraceLog(LOG_INFO, "Cell is at x: %i, y: %i, type: %i", cells[i].rect.x, cells[i].rect.y, cells[i].type);
     }
 
     Grid grid = {
         .width = grid_width,
         .height = grid_height,
         .count_of_cells = grid_width * grid_height,
+        .origin = {0, 0},
         .cells = cells
     };
 
+    Cell* currentCell = NULL;
+
+    float button_size = 150;
+    Button buttons[CELL_TYPE_COUNT];
+
+    for(int i = 0; i < CELL_TYPE_COUNT; i++)
+    {
+        Button* button = &buttons[i];
+        button->rect = (Rectangle) {
+            .x = (button_size + 20) * i,
+            .y = screen_height - 170,
+            .width = button_size,
+            .height = button_size
+        };
+        button->rotation = 0;
+        button->origin.y = 0;
+        button->origin.x = 0;
+
+        char text[64];
+
+        snprintf(text, sizeof(text), "Button x: %.0f, y: %.0f, w: %.0f, h: %.0f", button->rect.x, button->rect.y, button->rect.width, button->rect.height);
+
+        TraceLog(LOG_INFO, text);
+
+        snprintf(text, sizeof(text), "Origin x: %.0f, y: %.0f", button->origin.x, button->origin.y);
+
+        TraceLog(LOG_INFO, text);
+    }
+
     while(!WindowShouldClose())
     {
+        Vector2 mouse_pos = GetMousePosition();
+
+        Cell* cell = NULL;
+        for (int i = 0; i < grid.count_of_cells; i++)
+        {
+            cell = &grid.cells[i];
+            if (CheckCollisionPointRec(mouse_pos, cell->rect))
+            {
+                cell->is_selected = true;
+
+                if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+                {
+                    TraceLog(LOG_INFO, "Cell %i was clicked", cell->type);
+                    currentCell = cell;
+                }
+            }
+            else {
+                cell->is_selected = false;
+            }
+        }
+
+
+
+        // There will be logic for updating the grid by the rules of the game of life
+
+
+
         BeginDrawing();
 
         ClearBackground(BLUE);
 
         Draw2DGrid(&grid);
 
+        if(currentCell != NULL)
+        {
+            DrawCellInfo(currentCell, screen_width, screen_height);
+            DrawCellButtons(buttons, CELL_TYPE_COUNT);
+        }
+
         EndDrawing();
     }
-
-    // UnloadShader(shader);
 
     CloseWindow();
 
