@@ -1,12 +1,11 @@
 CC = clang
 
-TARGET_TRIPLE = x86_64-w64-windows-gnu
-TARGET = build/game
-SOURCE = src/gol.c
 
-CFLAGS = -target $(TARGET_TRIPLE) \
-		 -std=c17 -Wall -Wextra -Wpedantic -O0 -g \
-         -Ivendor/raylib/src
+TARGET = build/game
+SOURCE = src/main.c
+
+CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview \
+         -Ivendor/raylib/src -isystem vendor
 
 LDFLAGS = -Lvendor/raylib/src
 
@@ -18,8 +17,8 @@ LDFLAGS = -Lvendor/raylib/src
 ifeq ($(OS),Windows_NT)
 
     PLATFORM = WINDOWS
-
-    CFLAGS += -DPLATFORM_DESKTOP
+    TARGET_TRIPLE = x86_64-w64-windows-gnu
+    CFLAGS += -DPLATFORM_DESKTOP -target $(TARGET_TRIPLE)
 
     LDFLAGS += -lraylib \
                -lopengl32 \
@@ -73,3 +72,6 @@ info:
 	@echo "Platform: $(PLATFORM)"
 	@echo "Compiler: $(CC)"
 	@echo "Target:   $(TARGET)"
+
+setup:
+	git submodule update --init --recursive
