@@ -2,9 +2,10 @@ CC = clang
 
 
 TARGET = build/game
-SOURCE = src/main.c
+SOURCE = src/main.c src/cell.c
+OBJ = $(SRC:.c=.o)
 
-CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview \
+CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview -MMD -MP \
          -Ivendor/raylib/src -isystem vendor
 
 LDFLAGS = -Lvendor/raylib/src
@@ -63,10 +64,14 @@ $(TARGET): $(SOURCE)
 run: $(TARGET)
 	./$(TARGET)
 
+game: $(OBJ)
+	$(CC) $(CFLAGS) $(SOURCE) -o $(TARGET) $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(SOURCE) -c $< -o $@
 
 clean:
 	rm -rf build
-
 
 info:
 	@echo "Platform: $(PLATFORM)"
