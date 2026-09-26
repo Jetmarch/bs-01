@@ -64,6 +64,22 @@ bool BrewingGrid_IsNeighbourExist(Grid* grid, int x, int y)
     return cell->type == EMPTY_CELL ? 0 : 1;
 }
 
+int BrewingGrid_GetNeighbourCount(BrewingGrid* brewing_grid, int x, int y)
+{
+    uint8_t neighbourCount = 0;
+
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y - 1);   // Top left
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x, y - 1);       // Top middle
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y - 1);   // Top right
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y);       // Left
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y);       // Right
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y + 1);   // Bottom left
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x, y + 1);       // Bottom middle
+    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y + 1);
+
+    return neighbourCount;
+}
+
 
 void BrewingGrid_Update(BrewingGrid *brewing_grid, float delta)
 {
@@ -71,10 +87,10 @@ void BrewingGrid_Update(BrewingGrid *brewing_grid, float delta)
         brewing_grid->current_duration_ms -= delta;
         if(brewing_grid->current_duration_ms <= 0.0)
         {
-            Cell* cell = NULL;
-            Cell* bufferCell = NULL;
-            uint8_t neighbourCount = 0;
 
+            uint8_t neighbourCount = 0;
+            Cell* bufferCell = NULL;
+            Cell* cell;
             for (int y = 0; y < brewing_grid->grid.height; y++)
             {
                 for (int x = 0; x < brewing_grid->grid.width; x++)
@@ -84,14 +100,7 @@ void BrewingGrid_Update(BrewingGrid *brewing_grid, float delta)
                     cell = GetCellAtWrapAround(brewing_grid->active_grid, x, y);
                     bufferCell = GetCellAtWrapAround(brewing_grid->working_grid, x, y);
 
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y - 1);   // Top left
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x, y - 1);       // Top middle
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y - 1);   // Top right
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y);       // Left
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y);       // Right
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y + 1);   // Bottom left
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x, y + 1);       // Bottom middle
-                    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y + 1);   // Bottom right
+                    neighbourCount = BrewingGrid_GetNeighbourCount(brewing_grid, x, y);
 
                     if (neighbourCount == 3) {
                         bufferCell->type = YELLOW_CELL;
