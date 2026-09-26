@@ -33,7 +33,7 @@ Cell* GetCellAtWrapAround(Grid* grid, int x, int y);
 Color SolveCellColor(const Cell* cell);
 const char *CellTypeToString(enum CellType type);
 void Draw2DGrid(Grid* grid);
-void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_height, struct nk_context* ctx);
+// void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_height, struct nk_context* ctx);
 void DrawCellButtons(struct nk_context* ctx, int screen_height, Cell* current_cell);
 void DestroyGrid(Grid* grid);
 void PrintCell(const Cell* cell);

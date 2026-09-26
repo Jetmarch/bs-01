@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 bool BrewingGrid_Init(BrewingGrid* brewing_grid, int max_cells, int grid_width, int grid_height, int screen_width, int screen_height, int cell_size, float duration_step_s)
 {
@@ -146,6 +147,37 @@ void BrewingGrid_HandleInput(BrewingGrid* grid)
             cell->is_selected = false;
         }
     }
+}
+
+void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_height, struct nk_context* ctx)
+{
+    // Draw cell container
+    int w = 250;
+    int h = 100;
+    int x = screen_width - w;
+    int y = screen_height - h;
+    DrawRectangle(x, y, w, h, LIGHTGRAY);
+
+    char text[128];
+
+    snprintf(
+        text,
+        sizeof(text),
+        "CellType: %s, neighbors:",
+        CellTypeToString(cell->type)
+        // BrewingGrid_GetNeighbourCount(BrewingGrid *brewing_grid, int x, int y)
+    );
+
+    // int text_size = MeasureText(text, 20);
+    // DrawText(text, x + text_size - 50, y + 35, 20, BLACK);
+
+
+    if (nk_begin(ctx, "CellInfo", nk_rect(screen_width - w, screen_height - h, w, h), NK_WINDOW_BORDER)) {
+        /* fixed widget pixel width */
+        nk_layout_row_static(ctx, 30, 180, 1);
+        nk_label(ctx, text, NK_TEXT_LEFT);
+    }
+    nk_end(ctx);
 }
 
 void BrewingGrid_Destroy(BrewingGrid* grid)

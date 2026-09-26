@@ -79,6 +79,7 @@ int main(void)
             /* fixed widget pixel width */
             nk_layout_row_dynamic(ctx, 0, 1);
 
+            //TODO:
             if(!brewing_grid.is_brewing_in_process) {
                 if (nk_button_label(ctx, "Start brew")) {
                     brewing_grid.is_brewing_in_process = true;

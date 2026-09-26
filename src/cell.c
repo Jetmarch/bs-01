@@ -63,39 +63,6 @@ void Draw2DGrid(Grid* grid)
     }
 }
 
-void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_height, struct nk_context* ctx)
-{
-    // Draw cell container
-    int w = 250;
-    int h = 100;
-    int x = screen_width - w;
-    int y = screen_height - h;
-    DrawRectangle(x, y, w, h, LIGHTGRAY);
-
-    char text[64];
-
-    snprintf(
-        text,
-        sizeof(text),
-        "Cell is %s",
-        CellTypeToString(cell->type)
-    );
-
-    int text_size = MeasureText(text, 20);
-    DrawText(text, x + text_size - 50, y + 35, 20, BLACK);
-
-
-    if (nk_begin(ctx, "CellInfo", nk_rect(screen_width - w, screen_height - h, w, h), NK_WINDOW_BORDER)) {
-        /* fixed widget pixel width */
-        nk_layout_row_static(ctx, 30, 80, 1);
-
-
-        nk_label(ctx, text, NK_TEXT_LEFT);
-    }
-    nk_end(ctx);
-
-}
-
 void DrawCellButtons(struct nk_context* ctx, int screen_height, Cell* current_cell)
 {
     if (nk_begin(ctx, "Add something to grid", nk_rect(20, screen_height - 148, 512, 128), NK_WINDOW_BORDER)) {

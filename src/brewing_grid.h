@@ -21,3 +21,4 @@ void BrewingGrid_Update(BrewingGrid* grid, float delta);
 void BrewingGrid_HandleInput(BrewingGrid* grid);
 void BrewingGrid_SwapBuffers(BrewingGrid* grid);
 void BrewingGrid_Destroy(BrewingGrid* grid);
+void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_height, struct nk_context* ctx);
