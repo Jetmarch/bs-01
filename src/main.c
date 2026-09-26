@@ -1,13 +1,16 @@
+
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
 
 #include <stddef.h>
 
 #include <raylib.h>
 #include <stdint.h>
-#include <stdlib.h>
+
+#include <stdio.h>
 #include "rlgl.h"
 #include "external/glad.h"
-#include "cell.h"
+
+#include "brewing_grid.h"
 
 #include <raylib-nuklear/include/raylib-nuklear.h>
 
@@ -17,17 +20,18 @@
 #define SCREEN_WIDTH 1240
 #define SCREEN_HEIGHT 720
 
-#define CELL_SIZE 100
+#define CELL_SIZE 30
 
+#define DURATION_STEP_S 0.3
 
 
 int main(void)
 {
     const int screen_width = SCREEN_WIDTH;
     const int screen_height = SCREEN_HEIGHT;
-    const int max_cells = 9;
-    const int grid_width = 3;
-    const int grid_height = 3;
+    const int grid_width = 15;
+    const int grid_height = 15;
+    const int max_cells = grid_width * grid_height;
 
     const int font_size = 14;
     struct nk_context *ctx = InitNuklear(font_size);
@@ -36,89 +40,74 @@ int main(void)
 
     SetTargetFPS(60);
 
-    Cell* cells = malloc(sizeof(Cell) * max_cells);
+    BrewingGrid brewing_grid;
 
-    int n_i = 0;
-    Cell* cell = NULL;
-    for (int y = 0; y < grid_height; y++)
+    if(!BrewingGrid_Init(&brewing_grid, max_cells, grid_width, grid_height, screen_width, screen_height, CELL_SIZE, DURATION_STEP_S))
     {
-        for(int x = 0; x < grid_width; x++)
-        {
-            n_i =  y + grid_width * x;
-            cell = &cells[n_i];
-
-            if (n_i % 2 == 0) {
-                cell->type = EMPTY_CELL;
-            }
-            else {
-                cell->type = RED_CELL;
-            }
-
-            cell->rect.x = x * CELL_SIZE;
-            cell->rect.y = y * CELL_SIZE;
-            cell->rect.width = (float)CELL_SIZE;
-            cell->rect.height = (float)CELL_SIZE;
-
-            // TraceLog(LOG_INFO, "Cell x: %.0f y: %.0f, w: %.0f, h: %.0f type: %i", cell->rect.x, cell->rect.y, cell->rect.width, cell->rect.height, cell->type);
-        }
+        TraceLog(LOG_ERROR, "BrewingGrid init error!");
+        CloseWindow();
+        return 1;
     }
 
-    Grid grid = {
-        .width = grid_width,
-        .height = grid_height,
-        .count_of_cells = grid_width * grid_height,
-        .origin = {0, 0},
-        .cells = cells
-    };
-
-    Cell* currentCell = NULL;
+    float delta;
+    float frame_time;
 
     while(!WindowShouldClose())
     {
+        frame_time = GetTime();
         UpdateNuklear(ctx);
 
-        Vector2 mouse_pos = GetMousePosition();
 
-        Cell* cell = NULL;
-        for (int i = 0; i < grid.count_of_cells; i++)
-        {
-            cell = &grid.cells[i];
-            if (CheckCollisionPointRec(mouse_pos, cell->rect))
-            {
-                cell->is_selected = true;
-
-                if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-                {
-                    TraceLog(LOG_INFO, "Cell %i was clicked", cell->type);
-                    currentCell = cell;
-                }
-            }
-            else {
-                cell->is_selected = false;
-            }
-        }
-        // There will be logic for updating the grid by the rules of the game of life
+        BrewingGrid_HandleInput(&brewing_grid);
+        BrewingGrid_Update(&brewing_grid, delta);
 
 
 
         BeginDrawing();
 
-        ClearBackground(BLUE);
+        ClearBackground(BLACK);
 
-        Draw2DGrid(&grid);
+        Draw2DGrid(&brewing_grid.grid);
 
-        if(currentCell != NULL)
+        if(brewing_grid.selected_cell != NULL)
         {
-            DrawCellInfo(currentCell, screen_width, screen_height, ctx);
-            DrawCellButtons(ctx, screen_height, currentCell);
+            DrawCellInfo(brewing_grid.selected_cell, screen_width, screen_height, ctx);
+            DrawCellButtons(ctx, screen_height, brewing_grid.selected_cell);
         }
 
+        if (nk_begin(ctx, "Brew", nk_rect(20, screen_height - 250, 128, 100), NK_WINDOW_BORDER)) {
+            /* fixed widget pixel width */
+            nk_layout_row_dynamic(ctx, 0, 1);
+
+            if(!brewing_grid.is_brewing_in_process) {
+                if (nk_button_label(ctx, "Start brew")) {
+                    brewing_grid.is_brewing_in_process = true;
+                    brewing_grid.current_duration_ms = brewing_grid.step_duration_ms;
+                }
+            }
+            else {
+                if (nk_button_label(ctx, "End brew"))
+                {
+                    brewing_grid.is_brewing_in_process = false;
+                    brewing_grid.current_duration_ms = brewing_grid.step_duration_ms;
+                }
+            }
+
+            char text[64];
+            snprintf(text, sizeof(text), "Next step: %.0f", brewing_grid.current_duration_ms);
+
+            nk_label(ctx, text, NK_TEXT_LEFT);
+        }
+        nk_end(ctx);
         DrawNuklear(ctx);
 
         EndDrawing();
+
+
+        delta = GetTime() - frame_time;
     }
 
-    free(cells);
+    BrewingGrid_Destroy(&brewing_grid);
 
     UnloadNuklear(ctx);
 

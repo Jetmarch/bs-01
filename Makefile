@@ -2,7 +2,7 @@ CC = clang
 
 
 TARGET = build/game
-SOURCE = src/main.c src/cell.c
+SOURCE = src/main.c src/cell.c src/brewing_grid.c
 OBJ = $(SRC:.c=.o)
 
 CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview -MMD -MP \

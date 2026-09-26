@@ -1,11 +1,11 @@
 #include "cell.h"
 
-
+#include <stdlib.h>
 #include <stdio.h>
 
 Cell* GetCellAt(Grid* grid, int x, int y)
 {
-    return &grid->cells[y + grid->width + x];
+    return &grid->cells[y * grid->width + x];
 }
 
 //Wrap around lookup
@@ -129,4 +129,29 @@ void DrawCellButtons(struct nk_context* ctx, int screen_height, Cell* current_ce
         }
     }
     nk_end(ctx);
+}
+
+void PrintCell(const Cell* cell)
+{
+    printf(
+        "Cell {\n"
+        "    x=%i, y=%i\n"
+        "    rect: x=%.2f, y=%.2f, width=%.2f, height=%.2f\n"
+        "    is_selected: %s\n"
+        "    type: %d\n"
+        "}\n",
+        cell->x,
+        cell->y,
+        cell->rect.x,
+        cell->rect.y,
+        cell->rect.width,
+        cell->rect.height,
+        cell->is_selected ? "true" : "false",
+        cell->type
+    );
+}
+
+void DestroyGrid(Grid* grid)
+{
+    free(grid->cells);
 }
