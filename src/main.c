@@ -1,4 +1,5 @@
 
+#include "ingredient.h"
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
 
 #include <stddef.h>
@@ -31,7 +32,8 @@ int main(void)
     const int screen_height = SCREEN_HEIGHT;
     const int grid_width = 15;
     const int grid_height = 15;
-    const int max_cells = grid_width * grid_height;
+    const int cell_size = CELL_SIZE;
+    const float duration_step_s = DURATION_STEP_S;
 
     const int font_size = 14;
     struct nk_context *ctx = InitNuklear(font_size);
@@ -40,14 +42,25 @@ int main(void)
 
     SetTargetFPS(60);
 
-    Cauldron brewing_grid;
+    Cauldron cauldron;
 
-    if(!Cauldron_Init(&brewing_grid, max_cells, grid_width, grid_height, screen_width, screen_height, CELL_SIZE, DURATION_STEP_S))
+    if(!Cauldron_Init(&cauldron,grid_width, grid_height, screen_width, screen_height, cell_size, duration_step_s))
     {
-        TraceLog(LOG_ERROR, "BrewingGrid init error!");
+        TraceLog(LOG_ERROR, "Cauldron_Init error!");
         CloseWindow();
         return 1;
     }
+
+    IngredientList ingredients = {0};
+
+    if(!Ingredient_InitList(&ingredients))
+    {
+        TraceLog(LOG_ERROR, "Ingredient_InitList error!");
+        CloseWindow();
+        return 1;
+    }
+
+    TraceLog(LOG_INFO, "Ingredient_InitList initialized");
 
     float delta;
     float frame_time;
@@ -57,42 +70,38 @@ int main(void)
         frame_time = GetTime();
         UpdateNuklear(ctx);
 
-        Cauldron_HandleInput(&brewing_grid);
-        Cauldron_Update(&brewing_grid, delta);
+        Cauldron_HandleInput(&cauldron);
+        Cauldron_Update(&cauldron, delta);
 
         BeginDrawing();
 
         ClearBackground(BLACK);
 
-        Draw2DGrid(&brewing_grid.grid);
+        Cauldron_DrawIngredientsBar(&cauldron, &ingredients, ctx, screen_height);
 
-        if(brewing_grid.selected_cell != NULL)
-        {
-            DrawCellInfo(brewing_grid.selected_cell, screen_width, screen_height, ctx);
-            DrawCellButtons(ctx, screen_height, brewing_grid.selected_cell);
-        }
+        Grid_Draw(&cauldron.active_grid);
 
         if (nk_begin(ctx, "Brew", nk_rect(20, screen_height - 250, 128, 100), NK_WINDOW_BORDER)) {
             /* fixed widget pixel width */
             nk_layout_row_dynamic(ctx, 0, 1);
 
             //TODO:
-            if(!brewing_grid.is_brewing_in_process) {
+            if(!cauldron.is_brewing_in_process) {
                 if (nk_button_label(ctx, "Start brew")) {
-                    brewing_grid.is_brewing_in_process = true;
-                    brewing_grid.current_duration_ms = brewing_grid.step_duration_ms;
+                    cauldron.is_brewing_in_process = true;
+                    cauldron.current_duration_ms = cauldron.step_duration_ms;
                 }
             }
             else {
                 if (nk_button_label(ctx, "End brew"))
                 {
-                    brewing_grid.is_brewing_in_process = false;
-                    brewing_grid.current_duration_ms = brewing_grid.step_duration_ms;
+                    cauldron.is_brewing_in_process = false;
+                    cauldron.current_duration_ms = cauldron.step_duration_ms;
                 }
             }
 
             char text[64];
-            snprintf(text, sizeof(text), "Next step: %.0f", brewing_grid.current_duration_ms);
+            snprintf(text, sizeof(text), "Next step: %.0f", cauldron.current_duration_ms);
 
             nk_label(ctx, text, NK_TEXT_LEFT);
         }
@@ -105,7 +114,9 @@ int main(void)
         delta = GetTime() - frame_time;
     }
 
-    Cauldron_Destroy(&brewing_grid);
+    Cauldron_Destroy(&cauldron);
+
+    // Ingredient_FreeList(&ingredients);
 
     UnloadNuklear(ctx);
 
