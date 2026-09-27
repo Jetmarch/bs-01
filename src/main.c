@@ -10,7 +10,7 @@
 #include "rlgl.h"
 #include "external/glad.h"
 
-#include "brewing_grid.h"
+#include "cauldron.h"
 
 #include <raylib-nuklear/include/raylib-nuklear.h>
 
@@ -40,9 +40,9 @@ int main(void)
 
     SetTargetFPS(60);
 
-    BrewingGrid brewing_grid;
+    Cauldron brewing_grid;
 
-    if(!BrewingGrid_Init(&brewing_grid, max_cells, grid_width, grid_height, screen_width, screen_height, CELL_SIZE, DURATION_STEP_S))
+    if(!Cauldron_Init(&brewing_grid, max_cells, grid_width, grid_height, screen_width, screen_height, CELL_SIZE, DURATION_STEP_S))
     {
         TraceLog(LOG_ERROR, "BrewingGrid init error!");
         CloseWindow();
@@ -57,11 +57,8 @@ int main(void)
         frame_time = GetTime();
         UpdateNuklear(ctx);
 
-
-        BrewingGrid_HandleInput(&brewing_grid);
-        BrewingGrid_Update(&brewing_grid, delta);
-
-
+        Cauldron_HandleInput(&brewing_grid);
+        Cauldron_Update(&brewing_grid, delta);
 
         BeginDrawing();
 
@@ -108,7 +105,7 @@ int main(void)
         delta = GetTime() - frame_time;
     }
 
-    BrewingGrid_Destroy(&brewing_grid);
+    Cauldron_Destroy(&brewing_grid);
 
     UnloadNuklear(ctx);
 

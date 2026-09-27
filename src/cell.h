@@ -19,6 +19,7 @@ typedef struct Cell {
     enum CellType type;
 } Cell;
 
+//TODO: Move to grid.h
 typedef struct Grid {
     int width;
     int height;

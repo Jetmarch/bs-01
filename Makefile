@@ -1,9 +1,10 @@
 CC = clang
 
 
-TARGET = build/game
-SOURCE = src/main.c src/cell.c src/brewing_grid.c
-OBJ = $(SRC:.c=.o)
+
+SOURCE = $(wildcard src/*.c)
+
+OBJ = $(SOURCE:src/%.c=obj/%.o)
 
 CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview -MMD -MP \
          -Ivendor/raylib/src -isystem vendor
@@ -34,6 +35,8 @@ else
 # Linux
 # ============================================================
 
+	TARGET = build/game
+
     PLATFORM = LINUX
 
     LDFLAGS += -lraylib \
@@ -54,24 +57,20 @@ endif
 
 all: $(TARGET)
 
-
-$(TARGET): $(SOURCE)
+$(TARGET): $(OBJ)
 	@mkdir -p build
-	$(CC) $(CFLAGS) $(SOURCE) -o $(TARGET) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET) $(LDFLAGS)
 	cp -r resources build/
-
 
 run: $(TARGET)
 	./$(TARGET)
 
-game: $(OBJ)
-	$(CC) $(CFLAGS) $(SOURCE) -o $(TARGET) $(LDFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) $(SOURCE) -c $< -o $@
+obj/%.o: src/%.c
+	@mkdir -p obj
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf build
+	rm -rf build obj
 
 info:
 	@echo "Platform: $(PLATFORM)"

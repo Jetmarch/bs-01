@@ -1,10 +1,10 @@
-#include "brewing_grid.h"
+#include "cauldron.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-bool BrewingGrid_Init(BrewingGrid* brewing_grid, int max_cells, int grid_width, int grid_height, int screen_width, int screen_height, int cell_size, float duration_step_s)
+bool Cauldron_Init(Cauldron* brewing_grid, int max_cells, int grid_width, int grid_height, int screen_width, int screen_height, int cell_size, float duration_step_s)
 {
     Cell* cells = malloc(sizeof(Cell) * max_cells);
     int n_i = 0;
@@ -58,31 +58,38 @@ bool BrewingGrid_Init(BrewingGrid* brewing_grid, int max_cells, int grid_width, 
     return true;
 }
 
-bool BrewingGrid_IsNeighbourExist(Grid* grid, int x, int y)
+bool Cauldron_IsNeighbourExist(Grid* grid, int x, int y)
 {
     Cell* cell = GetCellAtWrapAround(grid, x, y);
 
     return cell->type == EMPTY_CELL ? 0 : 1;
 }
 
-int BrewingGrid_GetNeighbourCount(BrewingGrid* brewing_grid, int x, int y)
+int Cauldron_GetNeighbourCount(Cauldron* brewing_grid, int x, int y)
 {
     uint8_t neighbourCount = 0;
 
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y - 1);   // Top left
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x, y - 1);       // Top middle
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y - 1);   // Top right
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y);       // Left
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y);       // Right
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x - 1, y + 1);   // Bottom left
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x, y + 1);       // Bottom middle
-    neighbourCount += BrewingGrid_IsNeighbourExist(brewing_grid->active_grid, x + 1, y + 1);
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x - 1, y - 1);   // Top left
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x, y - 1);       // Top middle
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x + 1, y - 1);   // Top right
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x - 1, y);       // Left
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x + 1, y);       // Right
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x - 1, y + 1);   // Bottom left
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x, y + 1);       // Bottom middle
+    neighbourCount += Cauldron_IsNeighbourExist(brewing_grid->active_grid, x + 1, y + 1);
 
     return neighbourCount;
 }
 
+void Cauldron_SwapBuffers(Cauldron* brewing_grid)
+{
+    Grid* temp_grid = brewing_grid->active_grid;
+    brewing_grid->active_grid = brewing_grid->working_grid;
+    brewing_grid->working_grid = temp_grid;
+}
 
-void BrewingGrid_Update(BrewingGrid *brewing_grid, float delta)
+
+void Cauldron_Update(Cauldron *brewing_grid, float delta)
 {
     if (brewing_grid->is_brewing_in_process) {
         brewing_grid->current_duration_ms -= delta;
@@ -101,7 +108,7 @@ void BrewingGrid_Update(BrewingGrid *brewing_grid, float delta)
                     cell = GetCellAtWrapAround(brewing_grid->active_grid, x, y);
                     bufferCell = GetCellAtWrapAround(brewing_grid->working_grid, x, y);
 
-                    neighbourCount = BrewingGrid_GetNeighbourCount(brewing_grid, x, y);
+                    neighbourCount = Cauldron_GetNeighbourCount(brewing_grid, x, y);
 
                     if (neighbourCount == 3) {
                         bufferCell->type = YELLOW_CELL;
@@ -117,19 +124,12 @@ void BrewingGrid_Update(BrewingGrid *brewing_grid, float delta)
 
             brewing_grid->current_duration_ms = brewing_grid->step_duration_ms;
 
-            BrewingGrid_SwapBuffers(brewing_grid);
+            Cauldron_SwapBuffers(brewing_grid);
         }
     }
 }
 
-void BrewingGrid_SwapBuffers(BrewingGrid* brewing_grid)
-{
-    Grid* temp_grid = brewing_grid->active_grid;
-    brewing_grid->active_grid = brewing_grid->working_grid;
-    brewing_grid->working_grid = temp_grid;
-}
-
-void BrewingGrid_HandleInput(BrewingGrid* grid)
+void Cauldron_HandleInput(Cauldron* grid)
 {
     Vector2 mouse_pos = GetMousePosition();
 
@@ -160,16 +160,8 @@ void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_hei
 
     char text[128];
 
-    snprintf(
-        text,
-        sizeof(text),
-        "CellType: %s, neighbors:",
-        CellTypeToString(cell->type)
-        // BrewingGrid_GetNeighbourCount(BrewingGrid *brewing_grid, int x, int y)
-    );
+    snprintf(text, sizeof(text), "CellType: %s, neighbors:", CellTypeToString(cell->type));
 
-    // int text_size = MeasureText(text, 20);
-    // DrawText(text, x + text_size - 50, y + 35, 20, BLACK);
 
 
     if (nk_begin(ctx, "CellInfo", nk_rect(screen_width - w, screen_height - h, w, h), NK_WINDOW_BORDER)) {
@@ -180,7 +172,7 @@ void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_hei
     nk_end(ctx);
 }
 
-void BrewingGrid_Destroy(BrewingGrid* grid)
+void Cauldron_Destroy(Cauldron* grid)
 {
     DestroyGrid(&grid->grid);
     DestroyGrid(&grid->buffer_grid);

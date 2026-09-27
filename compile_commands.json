@@ -1,0 +1,17 @@
+[
+  {
+    "directory": ".",
+    "command": "clang -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview -MMD -MP -Ivendor/raylib/src -isystem vendor -DPLATFORM_DESKTOP -target x86_64-w64-windows-gnu -c src/main.c -o build/main.o",
+    "file": "src/main.c"
+  },
+  {
+    "directory": ".",
+    "command": "clang -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview -MMD -MP -Ivendor/raylib/src -isystem vendor -DPLATFORM_DESKTOP -target x86_64-w64-windows-gnu -c src/cell.c -o build/cell.o",
+    "file": "src/cell.c"
+  },
+  {
+    "directory": ".",
+    "command": "clang -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview -MMD -MP -Ivendor/raylib/src -isystem vendor -DPLATFORM_DESKTOP -target x86_64-w64-windows-gnu -c src/brewing_grid.c -o build/brewing_grid.o",
+    "file": "src/brewing_grid.c"
+  }
+]
