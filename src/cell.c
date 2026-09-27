@@ -39,41 +39,6 @@ const char *CellTypeToString(enum CellType type)
     }
 }
 
-void DrawCellButtons(struct nk_context* ctx, int screen_height, Cell* current_cell)
-{
-    if (nk_begin(ctx, "Add something to grid", nk_rect(20, screen_height - 148, 512, 128), NK_WINDOW_BORDER)) {
-        /* fixed widget pixel width */
-        nk_layout_row_dynamic(ctx, 24, 3);
-
-
-        if (nk_button_label(ctx, "Red ingredient"))
-        {
-            current_cell->type = RED_CELL;
-        }
-
-        if (nk_button_label(ctx, "Blue ingredient"))
-        {
-            current_cell->type = BLUE_CELL;
-        }
-
-        if (nk_button_label(ctx, "Green ingredient"))
-        {
-            current_cell->type = GREEN_CELL;
-        }
-
-        if (nk_button_label(ctx, "Yellow ingredient"))
-        {
-            current_cell->type = YELLOW_CELL;
-        }
-
-        if (nk_button_label(ctx, "Empty cell"))
-        {
-            current_cell->type = EMPTY_CELL;
-        }
-    }
-    nk_end(ctx);
-}
-
 void PrintCell(const Cell* cell)
 {
     printf(
