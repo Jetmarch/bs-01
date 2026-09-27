@@ -36,7 +36,8 @@ bool Cauldron_Init(Cauldron* brewing_grid, int max_cells, int grid_width, int gr
         .height = grid_height,
         .count_of_cells = grid_width * grid_height,
         .origin = {0, 0},
-        .cells = cells
+        .cells = cells,
+        .cell_size = cell_size
     };
 
     Grid buffer_simple_grid = simple_grid;
@@ -129,25 +130,22 @@ void Cauldron_Update(Cauldron *brewing_grid, float delta)
     }
 }
 
-void Cauldron_HandleInput(Cauldron* grid)
+
+void Cauldron_HandleInput(Cauldron* cauldron)
 {
-    Vector2 mouse_pos = GetMousePosition();
+    //Insert ingredient to cauldron
+    if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && cauldron->selected_ingredient != NULL) {
+        Vector2 mouse_pos = GetMousePosition();
 
-    Cell* cell = NULL;
-    for (int i = 0; i < grid->grid.count_of_cells; i++) {
-        cell = &grid->grid.cells[i];
-        if (CheckCollisionPointRec(mouse_pos, cell->rect)) {
-            cell->is_selected = true;
+        int grid_x = mouse_pos.x / cauldron->active_grid->cell_size;
+        int grid_y = mouse_pos.y / cauldron->active_grid->cell_size;
 
-            if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                grid->selected_cell = cell;
-            }
-        }
-        else {
-            cell->is_selected = false;
-        }
+        InsertGrid(cauldron->working_grid, cauldron->selected_ingredient, grid_x, grid_y);
+
     }
 }
+
+
 
 void DrawCellInfo(const Cell* cell, const int screen_width, const int screen_height, struct nk_context* ctx)
 {

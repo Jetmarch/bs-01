@@ -1,4 +1,4 @@
-#include "cell.h"
+#include "grid.h"
 
 typedef struct Cauldron {
     Grid grid;
@@ -11,7 +11,6 @@ typedef struct Cauldron {
 
     Grid* active_grid;
     Grid* working_grid;
-
 
     Grid* selected_ingredient;
 } Cauldron;

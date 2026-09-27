@@ -1,21 +1,6 @@
 #include "cell.h"
 
-#include <stdlib.h>
 #include <stdio.h>
-
-Cell* GetCellAt(Grid* grid, int x, int y)
-{
-    return &grid->cells[y * grid->width + x];
-}
-
-//Wrap around lookup
-Cell* GetCellAtWrapAround(Grid* grid, int x, int y)
-{
-    int t_x = (x + grid->width) % grid->width;
-    int t_y = (y + grid->height) % grid->height;
-
-    return GetCellAt(grid, t_x, t_y);
-}
 
 Color SolveCellColor(const Cell* cell)
 {
@@ -51,15 +36,6 @@ const char *CellTypeToString(enum CellType type)
         case GREEN_CELL:  return "green";
         case YELLOW_CELL: return "yellow";
         default:          return "unknown";
-    }
-}
-
-void Draw2DGrid(Grid* grid)
-{
-    for(int i = 0; i < grid->count_of_cells; i++)
-    {
-        Cell* cell = &grid->cells[i];
-        DrawRectanglePro(cell->rect, grid->origin, 0.0, SolveCellColor(cell));
     }
 }
 
@@ -116,9 +92,4 @@ void PrintCell(const Cell* cell)
         cell->is_selected ? "true" : "false",
         cell->type
     );
-}
-
-void DestroyGrid(Grid* grid)
-{
-    free(grid->cells);
 }
