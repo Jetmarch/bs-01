@@ -1,6 +1,7 @@
 #include "ingredient.h"
 #include "cell.h"
 #include "grid.h"
+#include "material.h"
 #include <stdlib.h>
 
 typedef struct IngredientDefinition {
@@ -9,13 +10,13 @@ typedef struct IngredientDefinition {
     int width;
     int height;
 
-    const enum CellType* cells;
+    const enum MaterialType* cells;
 } IngredientDefinition;
 
-static const enum CellType SALT_CELLS[3 * 3] = {
-    EMPTY_CELL, SALT_CELL,  EMPTY_CELL,
-    SALT_CELL,  SALT_CELL,  SALT_CELL,
-    EMPTY_CELL, SALT_CELL,  EMPTY_CELL
+static const enum MaterialType SALT_CELLS[3 * 3] = {
+    MATERIAL_NONE, MATERIAL_SALT,  MATERIAL_NONE,
+    MATERIAL_SALT, MATERIAL_SALT,  MATERIAL_SALT,
+    MATERIAL_NONE, MATERIAL_SALT,  MATERIAL_NONE
 };
 
 static const IngredientDefinition INGREDIENT_DEFINITIONS[] = {
@@ -99,8 +100,7 @@ static bool Ingredient_Init(
                 y
             );
 
-            cell->type =
-                definition->cells[y * definition->width + x];
+            cell->material = Material_GetDefinition(definition->cells[y * definition->width + x]);
         }
     }
 

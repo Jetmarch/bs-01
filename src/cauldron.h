@@ -3,6 +3,7 @@
 
 #include "grid.h"
 #include "ingredient.h"
+#include "utils.h"
 
 
 typedef struct Cauldron {
@@ -11,13 +12,13 @@ typedef struct Cauldron {
     bool is_brewing_in_process;
     float step_duration_ms;
     float current_duration_ms;
+    Direction gravity;
 
     Cell* selected_cell;
-
     Grid* active_grid_ptr;
     Grid* buffer_grid_ptr;
-
     Ingredient* selected_ingredient;
+
 } Cauldron;
 
 

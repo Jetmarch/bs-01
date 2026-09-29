@@ -1,34 +1,47 @@
 #include "cell.h"
+#include "material.h"
 #include "raylib.h"
+#include <assert.h>
 
 
 Color SolveCellColor(const Cell* cell)
 {
+    assert(cell != NULL);
     if(cell->is_selected)
     {
         return VIOLET;
     }
 
-    switch (cell->type)
+    if(cell->material == Material_GetDefinition(MATERIAL_NONE))
     {
-        case EMPTY_CELL:
-            return DARKGRAY;
-        case SALT_CELL:
-           return LIGHTGRAY;
+        return DARKGRAY;
+    }
+
+    switch (cell->material->type)
+    {
+        case MATERIAL_WATER:
+           return BLUE;
+        case MATERIAL_SALT:
+            return LIGHTGRAY;
         default:
             return VIOLET;
     }
 }
 
-const char *CellTypeToString(enum CellType type)
+void Cell_MoveContent(Cell* source, Cell* target)
 {
-    switch (type)
-    {
-        case EMPTY_CELL:  return "empty";
-        case RED_CELL:    return "red";
-        case BLUE_CELL:   return "blue";
-        case GREEN_CELL:  return "green";
-        case YELLOW_CELL: return "yellow";
-        default:          return "unknown";
-    }
+    target->material = source->material;
+    target->amount = source->amount;
+    target->temperature = source->temperature;
+
+    source->material = NULL;
+    source->amount = 0.0f;
+    source->temperature = 0.0f;
+}
+
+void Cell_CopyContent(Cell* source, Cell* target)
+{
+    target->material = source->material;
+    target->amount = source->amount;
+    target->temperature = source->temperature;
 }
