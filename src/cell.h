@@ -11,6 +11,8 @@ enum CellType {
     GREEN_CELL,
     YELLOW_CELL,
 
+    SALT_CELL,
+
     CELL_TYPE_COUNT
 };
 
@@ -28,6 +30,5 @@ typedef struct Cell {
 
 Color SolveCellColor(const Cell* cell);
 const char *CellTypeToString(enum CellType type);
-void PrintCell(const Cell* cell);
 
 #endif

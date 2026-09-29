@@ -22,7 +22,7 @@
 #define SCREEN_WIDTH 1240
 #define SCREEN_HEIGHT 720
 
-#define CELL_SIZE 30
+#define CELL_SIZE 15
 
 #define DURATION_STEP_S 0.3
 
@@ -31,8 +31,8 @@ int main(void)
 {
     const int screen_width = SCREEN_WIDTH;
     const int screen_height = SCREEN_HEIGHT;
-    const int grid_width = 15;
-    const int grid_height = 15;
+    const int grid_width = 45;
+    const int grid_height = 45;
     const int cell_size = CELL_SIZE;
     const float duration_step_s = DURATION_STEP_S;
 

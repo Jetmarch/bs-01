@@ -3,6 +3,31 @@
 #include "grid.h"
 #include <stdlib.h>
 
+typedef struct IngredientDefinition {
+    enum IngredientType type;
+
+    int width;
+    int height;
+
+    const enum CellType* cells;
+} IngredientDefinition;
+
+static const enum CellType SALT_CELLS[3 * 3] = {
+    EMPTY_CELL, SALT_CELL,  EMPTY_CELL,
+    SALT_CELL,  SALT_CELL,  SALT_CELL,
+    EMPTY_CELL, SALT_CELL,  EMPTY_CELL
+};
+
+static const IngredientDefinition INGREDIENT_DEFINITIONS[] = {
+    [INGREDIENT_SALT] = {
+        .type = INGREDIENT_SALT,
+        .width = 3,
+        .height = 3,
+        .cells = SALT_CELLS
+    }
+};
+
+static bool Ingredient_Init(Ingredient* ingredient, const IngredientDefinition* definition);
 
 bool Ingredient_InitList(IngredientList* ingredient_list)
 {
@@ -13,29 +38,21 @@ bool Ingredient_InitList(IngredientList* ingredient_list)
         return false;
     }
 
-    Grid salt_grid = {0};
-    if (!Grid_Init(&salt_grid, 3, 4, (Vector2){0, 0}, 30))
+    for (int i = 0; i < INGREDIENT_TYPE_COUNT; ++i)
     {
-        TraceLog(LOG_FATAL, "Grid_Init: Cannot create INGREDIENT_SALT grid");
-        return false;
+        if (!Ingredient_Init(
+                &ingredient_list->list[i],
+                &INGREDIENT_DEFINITIONS[i]))
+        {
+            Ingredient_FreeList(ingredient_list);
+            return false;
+        }
     }
-
-    Cell* cell = Grid_GetCellAt(&salt_grid, 0, 0);
-    if(cell == NULL)
-    {
-        TraceLog(LOG_FATAL, "Grid_GetCellAt: Cannot get cell at {0, 0}");
-        return false;
-    }
-
-    cell->type = BLUE_CELL;
-
-    ingredient_list->list[0] = (Ingredient) {
-        .type = INGREDIENT_SALT,
-        .grid = salt_grid
-    };
 
     return true;
 }
+
+
 
 Ingredient* Ingredient_Get(IngredientList* ingredient_list, IngredientType type)
 {
@@ -54,4 +71,38 @@ void Ingredient_FreeList(IngredientList* ingredient_list)
 {
     free(ingredient_list->list);
     ingredient_list->list = NULL;
+}
+
+static bool Ingredient_Init(
+    Ingredient* ingredient,
+    const IngredientDefinition* definition)
+{
+    ingredient->type = definition->type;
+
+    if (!Grid_Init(
+            &ingredient->grid,
+            definition->width,
+            definition->height,
+            (Vector2){0, 0},
+            30))
+    {
+        return false;
+    }
+
+    for (int y = 0; y < definition->height; ++y)
+    {
+        for (int x = 0; x < definition->width; ++x)
+        {
+            Cell* cell = Grid_GetCellAt(
+                &ingredient->grid,
+                x,
+                y
+            );
+
+            cell->type =
+                definition->cells[y * definition->width + x];
+        }
+    }
+
+    return true;
 }

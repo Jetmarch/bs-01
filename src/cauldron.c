@@ -33,8 +33,6 @@ bool Cauldron_Init(Cauldron* cauldron, int grid_width, int grid_height, int scre
             cell->rect.width = (float)cell_size;
             cell->rect.height = (float)cell_size;
             cell->is_selected = false;
-
-            PrintCell(cell);
         }
     }
 

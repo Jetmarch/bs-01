@@ -69,8 +69,6 @@ bool Grid_InsertGrid(Grid* target, Grid* source, int x, int y)
             }
             //Copy only type
             target->cells[ty * target->width + tx].type = source->cells[sy * source->width + sx].type;
-            TraceLog(LOG_INFO, "tx: %i, ty: %i", tx, ty);
-            // Grid_GetCellAtWrapAround(target, tx, ty)->type = Grid_GetCellAtWrapAround(source, sx, sy)->type;
         }
     }
 
