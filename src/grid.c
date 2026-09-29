@@ -1,4 +1,5 @@
 #include "grid.h"
+#include "cell.h"
 #include "raylib.h"
 #include <stdlib.h>
 
@@ -23,6 +24,12 @@ bool Grid_Init(Grid* grid, int width, int height, Vector2 origin, int cell_size)
 
 Cell* Grid_GetCellAt(Grid* grid, int x, int y)
 {
+    if(x < 0 || x >= grid->width ||
+        y < 0 || y >= grid->height)
+    {
+        return NULL;
+    }
+
     return &grid->cells[y * grid->width + x];
 }
 
@@ -42,11 +49,11 @@ bool Grid_InsertGrid(Grid* target, Grid* source, int x, int y)
         return false;
     }
 
-    // if(x < 0 || x >= target->width ||
-    //     y < 0 || y >= target->height)
-    // {
-    //     return false;
-    // }
+    if(x < 0 || x >= target->width ||
+        y < 0 || y >= target->height)
+    {
+        return false;
+    }
 
     for (int sy = 0; sy < source->height; sy++)
     {
@@ -62,6 +69,8 @@ bool Grid_InsertGrid(Grid* target, Grid* source, int x, int y)
             }
             //Copy only type
             target->cells[ty * target->width + tx].type = source->cells[sy * source->width + sx].type;
+            TraceLog(LOG_INFO, "tx: %i, ty: %i", tx, ty);
+            // Grid_GetCellAtWrapAround(target, tx, ty)->type = Grid_GetCellAtWrapAround(source, sx, sy)->type;
         }
     }
 

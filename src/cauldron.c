@@ -23,27 +23,22 @@ bool Cauldron_Init(Cauldron* cauldron, int grid_width, int grid_height, int scre
     {
         for(int x = 0; x < grid_width; x++)
         {
-            n_i =  y + grid_width * x;
+            n_i =  y * grid_width + x;
             cell = &active_grid.cells[n_i];
-
-            if (n_i % 2 == 0) {
-                cell->type = EMPTY_CELL;
-            }
-            else {
-                cell->type = RED_CELL;
-            }
+            cell->type = EMPTY_CELL;
             cell->y = y;
             cell->x = x;
-            cell->rect.x = (x * cell_size);// + (((float)screen_width / 2) - ((float)grid_width * cell_size) / 2);
-            cell->rect.y = (y * cell_size);// + (((float)screen_height / 2) - ((float)grid_height * cell_size) / 2);
+            cell->rect.x = (x * cell_size);
+            cell->rect.y = (y * cell_size);
             cell->rect.width = (float)cell_size;
             cell->rect.height = (float)cell_size;
+            cell->is_selected = false;
 
             PrintCell(cell);
         }
     }
 
-    TraceLog(LOG_INFO, "Origin x:%.0f, y:%.0f", grid_origin.x, grid_origin.y);
+    // TraceLog(LOG_INFO, "Origin x:%.0f, y:%.0f", grid_origin.x, grid_origin.y);
 
     Grid buffer_grid;
     Grid_Init(&buffer_grid, grid_width, grid_height, grid_origin, cell_size);
@@ -148,8 +143,8 @@ void Cauldron_HandleInput(Cauldron* cauldron)
     if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && cauldron->selected_ingredient != NULL) {
         Vector2 mouse_pos = GetMousePosition();
 
-        int grid_x = (mouse_pos.x - cauldron->active_grid_ptr->origin.x) / cauldron->active_grid_ptr->cell_size;
-        int grid_y = (mouse_pos.y - cauldron->active_grid_ptr->origin.y) / cauldron->active_grid_ptr->cell_size;
+        int grid_x = (mouse_pos.x + cauldron->active_grid_ptr->origin.x) / cauldron->active_grid_ptr->cell_size;
+        int grid_y = (mouse_pos.y + cauldron->active_grid_ptr->origin.y) / cauldron->active_grid_ptr->cell_size;
 
         if(!Cauldron_InsertIngredient(cauldron, cauldron->selected_ingredient, grid_x, grid_y))
         {
@@ -159,36 +154,6 @@ void Cauldron_HandleInput(Cauldron* cauldron)
             TraceLog(LOG_INFO, "Inserted ingredient at x:%i, y:%i", grid_x, grid_y);
         }
     }
-
-
-    // if(IsKeyDown(KEY_D))
-    // {
-    //     cauldron->active_grid.origin.x -= 1;
-    //     cauldron->buffer_grid.origin.x -= 1;
-    // }
-
-    // if(IsKeyDown(KEY_A))
-    // {
-    //     cauldron->active_grid.origin.x += 1;
-    //     cauldron->buffer_grid.origin.x += 1;
-    // }
-
-    // if(IsKeyDown(KEY_S))
-    // {
-    //     cauldron->active_grid.origin.y -= 1;
-    //     cauldron->buffer_grid.origin.y -= 1;
-    // }
-
-    // if(IsKeyDown(KEY_W))
-    // {
-    //     cauldron->active_grid.origin.y += 1;
-    //     cauldron->buffer_grid.origin.y += 1;
-    // }
-
-    // if(IsKeyPressed(KEY_SPACE))
-    // {
-    //     TraceLog(LOG_INFO, "Origin x:%.0f, y:%.0f", cauldron->active_grid.origin.x, cauldron->active_grid.origin.y);
-    // }
 }
 
 

@@ -1,12 +1,13 @@
 #include "cell.h"
+#include "raylib.h"
 
 #include <stdio.h>
 
 Color SolveCellColor(const Cell* cell)
 {
-    if (cell->is_selected)
+    if(cell->is_selected)
     {
-        return LIGHTGRAY;
+        return VIOLET;
     }
 
     switch (cell->type)
@@ -23,6 +24,8 @@ Color SolveCellColor(const Cell* cell)
             return YELLOW;
         case CELL_TYPE_COUNT:
             return LIGHTGRAY;
+        default:
+            return VIOLET;
     }
 }
 

@@ -1,4 +1,5 @@
 
+#include "grid.h"
 #include "ingredient.h"
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
 
@@ -65,6 +66,8 @@ int main(void)
     float delta;
     float frame_time;
 
+    Cell* selected_cell;
+
     while(!WindowShouldClose())
     {
         frame_time = GetTime();
@@ -107,6 +110,28 @@ int main(void)
         }
         nk_end(ctx);
         DrawNuklear(ctx);
+
+        Vector2 mouse_pos = GetMousePosition();
+
+        char text[64];
+
+        int grid_x = (mouse_pos.x + cauldron.active_grid.origin.x) / cauldron.active_grid.cell_size;
+        int grid_y = (mouse_pos.y + cauldron.active_grid.origin.y) / cauldron.active_grid.cell_size;
+
+
+        if(selected_cell != NULL)
+        {
+            selected_cell->is_selected = false;
+        }
+
+        selected_cell = Grid_GetCellAt(&cauldron.active_grid, grid_x, grid_y);
+
+
+        if(selected_cell != NULL) {
+            selected_cell->is_selected = true;
+            snprintf(text, sizeof(text), "x:%i, y:%i", selected_cell->x, selected_cell->y);
+            DrawText(text, mouse_pos.x, mouse_pos.y, 24, WHITE);
+        }
 
         EndDrawing();
 
