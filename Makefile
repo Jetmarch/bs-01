@@ -50,6 +50,39 @@ endif
 # Targets
 # ============================================================
 
+
+
+# ============================================================
+# Windows / Powershell
+# ============================================================
+
+ifeq ($(OS),Windows_NT)
+
+.PHONY: all run clean info setup
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	if not exist build mkdir build
+	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS)
+	xcopy /e /Y resources build
+
+obj/%.o: src/%.c
+	if not exist obj mkdir obj
+	$(CC) $(CFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	./$(TARGET)
+
+clean:
+	if exist obj rmdir /s /q obj
+	if exist build rmdir /s /q build
+
+# ============================================================
+# Linux
+# ============================================================
+
+else
 .PHONY: all run clean info setup
 
 all: $(TARGET)
@@ -67,7 +100,9 @@ run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf build obj
+    rm -rf build obj
+
+endif
 
 info:
 	@echo "Platform: $(PLATFORM)"
