@@ -3,10 +3,8 @@
 #include "ingredient.h"
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
 
-#include <stddef.h>
 
 #include <raylib.h>
-#include <stdint.h>
 
 #include <stdio.h>
 #include "rlgl.h"
