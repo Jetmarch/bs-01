@@ -1,12 +1,9 @@
-CC = clang
-
-
+CC = gcc
 
 SOURCE = $(wildcard src/*.c)
-
 OBJ = $(SOURCE:src/%.c=obj/%.o)
 
-CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -gcodeview -MMD -MP \
+CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -MMD -MP \
          -Ivendor/raylib/src -isystem vendor
 
 LDFLAGS = -Lvendor/raylib/src
@@ -19,8 +16,8 @@ LDFLAGS = -Lvendor/raylib/src
 ifeq ($(OS),Windows_NT)
 
     PLATFORM = WINDOWS
-    TARGET_TRIPLE = x86_64-w64-windows-gnu
-    CFLAGS += -DPLATFORM_DESKTOP -target $(TARGET_TRIPLE)
+
+    CFLAGS += -DPLATFORM_DESKTOP
 
     LDFLAGS += -lraylib \
                -lopengl32 \
@@ -35,8 +32,6 @@ else
 # Linux
 # ============================================================
 
-	TARGET = build/game
-
     PLATFORM = LINUX
 
     LDFLAGS += -lraylib \
@@ -46,6 +41,8 @@ else
                -lrt \
                -lX11
 
+    TARGET := build/game
+
 endif
 
 
@@ -53,21 +50,21 @@ endif
 # Targets
 # ============================================================
 
-.PHONY: all run clean info
+.PHONY: all run clean info setup
 
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
 	@mkdir -p build
-	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET) $(LDFLAGS)
+	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS)
 	cp -r resources build/
-
-run: $(TARGET)
-	./$(TARGET)
 
 obj/%.o: src/%.c
 	@mkdir -p obj
 	$(CC) $(CFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
 	rm -rf build obj
