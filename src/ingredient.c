@@ -4,33 +4,31 @@
 #include "material.h"
 #include <stdlib.h>
 
-typedef struct IngredientDefinition {
+typedef struct IngredientDefinition
+{
     enum IngredientType type;
 
     int width;
     int height;
 
-    const enum MaterialType* cells;
+    const enum MaterialType *cells;
 } IngredientDefinition;
 
 static const enum MaterialType SALT_CELLS[3 * 3] = {
-    MATERIAL_NONE, MATERIAL_SALT,  MATERIAL_NONE,
-    MATERIAL_SALT, MATERIAL_SALT,  MATERIAL_SALT,
-    MATERIAL_NONE, MATERIAL_SALT,  MATERIAL_NONE
-};
+    MATERIAL_NONE, MATERIAL_SALT, MATERIAL_NONE,
+    MATERIAL_SALT, MATERIAL_SALT, MATERIAL_SALT,
+    MATERIAL_NONE, MATERIAL_SALT, MATERIAL_NONE};
 
 static const IngredientDefinition INGREDIENT_DEFINITIONS[] = {
     [INGREDIENT_SALT] = {
         .type = INGREDIENT_SALT,
         .width = 3,
         .height = 3,
-        .cells = SALT_CELLS
-    }
-};
+        .cells = SALT_CELLS}};
 
-static bool Ingredient_Init(Ingredient* ingredient, const IngredientDefinition* definition);
+static bool Ingredient_Init(Ingredient *ingredient, const IngredientDefinition *definition);
 
-bool Ingredient_InitList(IngredientList* ingredient_list)
+bool Ingredient_InitList(IngredientList *ingredient_list)
 {
     ingredient_list->list = calloc(INGREDIENT_TYPE_COUNT, sizeof *ingredient_list->list);
 
@@ -53,9 +51,7 @@ bool Ingredient_InitList(IngredientList* ingredient_list)
     return true;
 }
 
-
-
-Ingredient* Ingredient_Get(IngredientList* ingredient_list, IngredientType type)
+Ingredient *Ingredient_Get(IngredientList *ingredient_list, IngredientType type)
 {
     for (int i = 0; i < INGREDIENT_TYPE_COUNT; i++)
     {
@@ -68,15 +64,15 @@ Ingredient* Ingredient_Get(IngredientList* ingredient_list, IngredientType type)
     return NULL;
 }
 
-void Ingredient_FreeList(IngredientList* ingredient_list)
+void Ingredient_FreeList(IngredientList *ingredient_list)
 {
     free(ingredient_list->list);
     ingredient_list->list = NULL;
 }
 
 static bool Ingredient_Init(
-    Ingredient* ingredient,
-    const IngredientDefinition* definition)
+    Ingredient *ingredient,
+    const IngredientDefinition *definition)
 {
     ingredient->type = definition->type;
 
@@ -94,11 +90,10 @@ static bool Ingredient_Init(
     {
         for (int x = 0; x < definition->width; ++x)
         {
-            Cell* cell = Grid_GetCellAt(
+            Cell *cell = Grid_GetCellAt(
                 &ingredient->grid,
                 x,
-                y
-            );
+                y);
 
             cell->material = Material_GetDefinition(definition->cells[y * definition->width + x]);
         }

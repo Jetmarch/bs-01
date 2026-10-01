@@ -3,7 +3,6 @@
 #include "ingredient.h"
 #define RAYLIB_NUKLEAR_IMPLEMENTATION
 
-
 #include <raylib.h>
 
 #include <stdio.h>
@@ -14,7 +13,6 @@
 
 #include <raylib-nuklear/include/raylib-nuklear.h>
 
-
 #define ENTITY_COUNT 10000
 
 #define SCREEN_WIDTH 1240
@@ -23,7 +21,6 @@
 #define CELL_SIZE 15
 
 #define DURATION_STEP_S 0.3
-
 
 int main(void)
 {
@@ -43,7 +40,7 @@ int main(void)
 
     Cauldron cauldron;
 
-    if(!Cauldron_Init(&cauldron,grid_width, grid_height, screen_width, screen_height, cell_size, duration_step_s))
+    if (!Cauldron_Init(&cauldron, grid_width, grid_height, screen_width, screen_height, cell_size, duration_step_s))
     {
         TraceLog(LOG_ERROR, "Cauldron_Init error!");
         CloseWindow();
@@ -52,7 +49,7 @@ int main(void)
 
     IngredientList ingredients = {0};
 
-    if(!Ingredient_InitList(&ingredients))
+    if (!Ingredient_InitList(&ingredients))
     {
         TraceLog(LOG_ERROR, "Ingredient_InitList error!");
         CloseWindow();
@@ -64,9 +61,9 @@ int main(void)
     float delta;
     float frame_time;
 
-    Cell* selected_cell;
+    Cell *selected_cell;
 
-    while(!WindowShouldClose())
+    while (!WindowShouldClose())
     {
         frame_time = GetTime();
         UpdateNuklear(ctx);
@@ -80,20 +77,24 @@ int main(void)
 
         Cauldron_DrawIngredientsBar(&cauldron, &ingredients, ctx, screen_height);
 
-        Grid_Draw(&cauldron.active_grid);
+        Grid_Draw(cauldron.active_grid_ptr);
 
-        if (nk_begin(ctx, "Brew", nk_rect(20, screen_height - 250, 128, 100), NK_WINDOW_BORDER)) {
+        if (nk_begin(ctx, "Brew", nk_rect(20, screen_height - 250, 128, 100), NK_WINDOW_BORDER))
+        {
             /* fixed widget pixel width */
             nk_layout_row_dynamic(ctx, 0, 1);
 
-            //TODO:
-            if(!cauldron.is_brewing_in_process) {
-                if (nk_button_label(ctx, "Start brew")) {
+            // TODO:
+            if (!cauldron.is_brewing_in_process)
+            {
+                if (nk_button_label(ctx, "Start brew"))
+                {
                     cauldron.is_brewing_in_process = true;
                     cauldron.current_duration_ms = cauldron.step_duration_ms;
                 }
             }
-            else {
+            else
+            {
                 if (nk_button_label(ctx, "End brew"))
                 {
                     cauldron.is_brewing_in_process = false;
@@ -116,14 +117,12 @@ int main(void)
         // int grid_x = (mouse_pos.x + cauldron.active_grid.origin.x) / cauldron.active_grid.cell_size;
         // int grid_y = (mouse_pos.y + cauldron.active_grid.origin.y) / cauldron.active_grid.cell_size;
 
-
         // if(selected_cell != NULL)
         // {
         //     selected_cell->is_selected = false;
         // }
 
         // selected_cell = Grid_GetCellAt(&cauldron.active_grid, grid_x, grid_y);
-
 
         // if(selected_cell != NULL) {
         //     selected_cell->is_selected = true;
@@ -132,7 +131,6 @@ int main(void)
         // }
 
         EndDrawing();
-
 
         delta = GetTime() - frame_time;
     }
