@@ -45,3 +45,10 @@ void Cell_CopyContent(Cell* source, Cell* target)
     target->amount = source->amount;
     target->temperature = source->temperature;
 }
+
+void Cell_CleanContent(Cell* target)
+{
+    target->material = Material_GetDefinition(MATERIAL_NONE);
+    target->amount = 0;
+    target->temperature = 0;
+}

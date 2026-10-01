@@ -6,6 +6,7 @@
 #include "utils.h"
 
 
+
 typedef struct Cauldron {
     Grid active_grid;
     Grid buffer_grid;

@@ -91,6 +91,7 @@ void Grid_Draw(Grid* grid)
 void Grid_Destroy(Grid* grid)
 {
     assert(grid != NULL);
+
     free(grid->cells);
     grid->cells = NULL;
 }

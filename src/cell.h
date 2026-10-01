@@ -33,5 +33,6 @@ typedef struct Cell {
 Color SolveCellColor(const Cell* cell);
 void Cell_MoveContent(Cell* source, Cell* target);
 void Cell_CopyContent(Cell* source, Cell* target);
+void Cell_CleanContent(Cell* target);
 
 #endif
