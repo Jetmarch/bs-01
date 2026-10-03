@@ -20,7 +20,7 @@
 
 #define CELL_SIZE 15
 
-#define DURATION_STEP_S 0.3
+#define DURATION_STEP_S 0.1
 
 int main(void)
 {
@@ -61,7 +61,7 @@ int main(void)
     float delta;
     float frame_time;
 
-    Cell *selected_cell;
+    Cell *selected_cell = NULL;
 
     while (!WindowShouldClose())
     {
