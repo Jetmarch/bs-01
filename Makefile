@@ -3,7 +3,7 @@ CC = gcc
 SOURCE = $(wildcard src/*.c)
 OBJ = $(SOURCE:src/%.c=obj/%.o)
 
-CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g -MMD -MP \
+CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -O0 -g\
          -Ivendor/raylib/src -isystem vendor
 
 LDFLAGS = -Lvendor/raylib/src
