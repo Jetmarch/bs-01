@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "cauldron.h"
 #include "cell.h"
@@ -302,6 +303,28 @@ static CellPair GetCellPair(Cauldron *cauldron, int x, int y)
     return pair;
 }
 
+static bool Try_Move_Cell(Cauldron *cauldron, int from_x, int from_y, int to_x, int to_y)
+{
+    CellPair cell = GetCellPair(cauldron, from_x, from_y);
+    CellPair next_cell = GetCellPair(cauldron, to_x, to_y);
+
+    if (next_cell.buffer_cell == NULL)
+    {
+        Cell_CopyContent(cell.active_cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, from_x, from_y));
+        return false;
+    }
+
+    if (next_cell.buffer_cell->material != NULL)
+    {
+        Cell_CopyContent(cell.active_cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, from_x, from_y));
+        return false;
+    }
+
+    Cell_CopyContent(cell.active_cell, next_cell.buffer_cell);
+
+    return true;
+}
+
 static void Update_Gravity(Cauldron *cauldron, int x, int y)
 {
 
@@ -314,29 +337,48 @@ static void Update_Gravity(Cauldron *cauldron, int x, int y)
 
     int next_x = ceil(cell.active_cell->x + cauldron->gravity.x * cell.active_cell->material->gravity_strength);
     int next_y = ceil(cell.active_cell->y + cauldron->gravity.y * cell.active_cell->material->gravity_strength);
+    next_x = Clamp(next_x, 0, cauldron->active_grid_ptr->width);
+    next_y = Clamp(next_y, 0, cauldron->active_grid_ptr->height);
 
-    CellPair next_cell = GetCellPair(cauldron, next_x, next_y);
-
-    if (next_cell.buffer_cell == NULL)
+    if (Try_Move_Cell(cauldron, x, y, next_x, next_y))
     {
-        TraceLog(LOG_INFO, "next_cell is empty");
-        Cell_CopyContent(cell.active_cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, x, y));
         return;
     }
 
-    if (next_cell.buffer_cell->material != NULL)
+    // Trying to place cell in a previous positions until it not reaches initial position
+    while (!Try_Move_Cell(cauldron, x, y, next_x, next_y))
     {
-        TraceLog(LOG_INFO, "next_cell stopped by material");
+        next_x = next_x - cauldron->gravity.x;
+        next_y = next_y - cauldron->gravity.y;
 
-        Cell_CopyContent(cell.active_cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, x, y));
-        return;
+        if (next_x < x || next_y < y)
+        {
+            break;
+        }
     }
-
-    TraceLog(LOG_INFO, "next_cell is moved by gravityi", next_x, next_y);
-
-    Cell_CopyContent(cell.active_cell, next_cell.buffer_cell);
 }
 
 static void Update_Flow(Cauldron *cauldron, int x, int y)
 {
+    // try_down();
+
+    // if (!moved)
+    // {
+    //     try_down_left();
+    // }
+
+    // if (!moved)
+    // {
+    //     try_down_right();
+    // }
+
+    // if (!moved)
+    // {
+    //     try_left();
+    // }
+
+    // if (!moved)
+    // {
+    //     try_right();
+    // }
 }
