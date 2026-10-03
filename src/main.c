@@ -61,8 +61,6 @@ int main(void)
     float delta;
     float frame_time;
 
-    Cell *selected_cell = NULL;
-
     while (!WindowShouldClose())
     {
         frame_time = GetTime();
