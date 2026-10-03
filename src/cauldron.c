@@ -18,8 +18,8 @@ typedef struct CellPair
 } CellPair;
 
 static bool Cauldron_InsertIngredient(Cauldron *cauldron, Ingredient *ingredient, int x, int y);
-static void Update_Flow(Cauldron *cauldron, int x, int y);
-static void Update_Gravity(Cauldron *cauldron, int x, int y);
+static bool Update_Flow(Cauldron *cauldron, int x, int y);
+static bool Update_Gravity(Cauldron *cauldron, int x, int y);
 static CellPair GetCellPair(Cauldron *cauldron, int x, int y);
 
 static const Direction DIRECTION_DOWN = {.x = 0, .y = 1};
@@ -54,6 +54,7 @@ bool Cauldron_Init(Cauldron *cauldron, int grid_width, int grid_height, int scre
             cell->rect.width = (float)cell_size;
             cell->rect.height = (float)cell_size;
             cell->is_selected = false;
+            cell->amount = 0.0f;
         }
     }
 
@@ -160,14 +161,16 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
                 continue;
             }
 
+            bool moved = false;
+
             if (cell->material->gravity_strength > 0.0f)
             {
-                Update_Gravity(cauldron, x, y);
+                moved = Update_Gravity(cauldron, x, y);
             }
 
-            if (cell->material->is_liquid)
+            if (cell->material->is_liquid && !moved)
             {
-                Update_Flow(cauldron, x, y);
+                moved = Update_Flow(cauldron, x, y);
             }
         }
     }
@@ -293,8 +296,6 @@ static CellPair GetCellPair(Cauldron *cauldron, int x, int y)
 
     if (pair.buffer_cell == NULL || pair.active_cell == NULL)
     {
-        TraceLog(LOG_ERROR, "GetCellPair: buffer_cell or active_cell is NULL");
-
         pair.is_valid = false;
         return pair;
     }
@@ -303,10 +304,20 @@ static CellPair GetCellPair(Cauldron *cauldron, int x, int y)
     return pair;
 }
 
-static bool Try_Move_Cell(Cauldron *cauldron, int from_x, int from_y, int to_x, int to_y)
+static bool TryMoveCell(Cauldron *cauldron, int from_x, int from_y, int to_x, int to_y)
 {
     CellPair cell = GetCellPair(cauldron, from_x, from_y);
     CellPair next_cell = GetCellPair(cauldron, to_x, to_y);
+
+    if (!cell.is_valid)
+    {
+        return false;
+    }
+
+    if (!next_cell.is_valid)
+    {
+        return false;
+    }
 
     if (next_cell.buffer_cell == NULL)
     {
@@ -325,60 +336,83 @@ static bool Try_Move_Cell(Cauldron *cauldron, int from_x, int from_y, int to_x, 
     return true;
 }
 
-static void Update_Gravity(Cauldron *cauldron, int x, int y)
+static bool IsCellFree(Cauldron *cauldron, int x, int y)
+{
+    CellPair cell = GetCellPair(cauldron, x, y);
+
+    if (!cell.is_valid)
+    {
+        return false;
+    }
+
+    if (cell.buffer_cell->material != NULL)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+static bool Update_Gravity(Cauldron *cauldron, int x, int y)
 {
 
     CellPair cell = GetCellPair(cauldron, x, y);
 
     if (!cell.is_valid)
     {
-        return;
+        return false;
     }
 
     int next_x = ceil(cell.active_cell->x + cauldron->gravity.x * cell.active_cell->material->gravity_strength);
     int next_y = ceil(cell.active_cell->y + cauldron->gravity.y * cell.active_cell->material->gravity_strength);
-    next_x = Clamp(next_x, 0, cauldron->active_grid_ptr->width);
-    next_y = Clamp(next_y, 0, cauldron->active_grid_ptr->height);
+    next_x = Clamp(next_x, 0, cauldron->active_grid_ptr->width - 1);
+    next_y = Clamp(next_y, 0, cauldron->active_grid_ptr->height - 1);
 
-    if (Try_Move_Cell(cauldron, x, y, next_x, next_y))
+    if (TryMoveCell(cauldron, x, y, next_x, next_y))
     {
-        return;
+        return true;
     }
 
     // Trying to place cell in a previous positions until it not reaches initial position
-    while (!Try_Move_Cell(cauldron, x, y, next_x, next_y))
+    while (!TryMoveCell(cauldron, x, y, next_x, next_y))
     {
         next_x = next_x - cauldron->gravity.x;
         next_y = next_y - cauldron->gravity.y;
 
         if (next_x < x || next_y < y)
         {
-            break;
+            return false;
         }
     }
+
+    return true;
 }
 
-static void Update_Flow(Cauldron *cauldron, int x, int y)
+static bool Update_Flow(Cauldron *cauldron, int x, int y)
 {
-    // try_down();
+    // Down left
+    if (TryMoveCell(cauldron, x, y, x - 1, y + 1))
+    {
+        return true;
+    }
 
-    // if (!moved)
-    // {
-    //     try_down_left();
-    // }
+    // Down right
+    if (TryMoveCell(cauldron, x, y, x + 1, y + 1))
+    {
+        return true;
+    }
 
-    // if (!moved)
-    // {
-    //     try_down_right();
-    // }
+    // Left
+    if (TryMoveCell(cauldron, x, y, x - 1, y))
+    {
+        return true;
+    }
 
-    // if (!moved)
-    // {
-    //     try_left();
-    // }
+    // Right
+    if (TryMoveCell(cauldron, x, y, x + 1, y))
+    {
+        return true;
+    }
 
-    // if (!moved)
-    // {
-    //     try_right();
-    // }
+    return false;
 }

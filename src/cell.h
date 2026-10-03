@@ -6,7 +6,10 @@
 #include "material.h"
 #include "utils.h"
 
-enum CellType {
+#define CELL_MAX_AMOUNT 100.0f
+
+enum CellType
+{
     EMPTY_CELL,
     RED_CELL,
     BLUE_CELL,
@@ -18,21 +21,22 @@ enum CellType {
     CELL_TYPE_COUNT
 };
 
-typedef struct Cell {
+typedef struct Cell
+{
     int x, y;
 
     Rectangle rect;
     bool is_selected;
 
-    const MaterialDefinition* material;
+    const MaterialDefinition *material;
 
     float amount;
     float temperature;
 } Cell;
 
-Color SolveCellColor(const Cell* cell);
-void Cell_MoveContent(Cell* source, Cell* target);
-void Cell_CopyContent(Cell* source, Cell* target);
-void Cell_CleanContent(Cell* target);
+Color SolveCellColor(const Cell *cell);
+void Cell_MoveContent(Cell *source, Cell *target);
+void Cell_CopyContent(Cell *source, Cell *target);
+void Cell_CleanContent(Cell *target);
 
 #endif

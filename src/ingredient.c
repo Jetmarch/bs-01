@@ -105,6 +105,7 @@ static bool Ingredient_Init(
                 y);
 
             cell->material = Material_GetDefinition(definition->cells[y * definition->width + x]);
+            cell->amount = CELL_MAX_AMOUNT;
         }
     }
 
