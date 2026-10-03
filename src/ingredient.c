@@ -19,12 +19,21 @@ static const enum MaterialType SALT_CELLS[3 * 3] = {
     MATERIAL_SALT, MATERIAL_SALT, MATERIAL_SALT,
     MATERIAL_NONE, MATERIAL_SALT, MATERIAL_NONE};
 
+static const enum MaterialType WATER_CELLS[3 * 3] = {
+    MATERIAL_WATER, MATERIAL_WATER, MATERIAL_WATER,
+    MATERIAL_WATER, MATERIAL_WATER, MATERIAL_WATER,
+    MATERIAL_WATER, MATERIAL_WATER, MATERIAL_WATER};
+
+static const enum MaterialType IRON_CELLS[3 * 3] = {
+    MATERIAL_IRON, MATERIAL_IRON, MATERIAL_IRON,
+    MATERIAL_IRON, MATERIAL_IRON, MATERIAL_IRON,
+    MATERIAL_IRON, MATERIAL_IRON, MATERIAL_IRON};
+
 static const IngredientDefinition INGREDIENT_DEFINITIONS[] = {
-    [INGREDIENT_SALT] = {
-        .type = INGREDIENT_SALT,
-        .width = 3,
-        .height = 3,
-        .cells = SALT_CELLS}};
+    [INGREDIENT_SALT] = {.type = INGREDIENT_SALT, .width = 3, .height = 3, .cells = SALT_CELLS},
+    [INGREDIENT_WATER] = {.type = INGREDIENT_WATER, .width = 3, .height = 3, .cells = WATER_CELLS},
+    [INGREDIENT_IRON] = {.type = INGREDIENT_IRON, .width = 3, .height = 3, .cells = IRON_CELLS},
+};
 
 static bool Ingredient_Init(Ingredient *ingredient, const IngredientDefinition *definition);
 
