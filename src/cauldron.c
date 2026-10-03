@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <math.h>
 
 #include "cauldron.h"
 #include "cell.h"
@@ -16,17 +17,11 @@ typedef struct CellPair
 } CellPair;
 
 static bool Cauldron_InsertIngredient(Cauldron *cauldron, Ingredient *ingredient, int x, int y);
-// static bool Cauldron_IsNeighbourExist(Grid* grid, int x, int y);
-// static int Cauldron_GetNeighbourCount(Cauldron* brewing_grid, int x, int y);
-// static void Update_B3S23_Rule(Cauldron* cauldron, int x, int y);
-static void Update_Salt(Cauldron *cauldron, int x, int y);
+static void Update_Flow(Cauldron *cauldron, int x, int y);
 static void Update_Gravity(Cauldron *cauldron, int x, int y);
 static CellPair GetCellPair(Cauldron *cauldron, int x, int y);
 
-// static const Direction DIRECTION_UP    = { 0, -1 };
 static const Direction DIRECTION_DOWN = {.x = 0, .y = 1};
-// static const Direction DIRECTION_LEFT  = {-1,  0 };
-// static const Direction DIRECTION_RIGHT = { 1,  0 };
 
 bool Cauldron_Init(Cauldron *cauldron, int grid_width, int grid_height, int screen_width, int screen_height, int cell_size, float duration_step_s)
 {
@@ -36,7 +31,11 @@ bool Cauldron_Init(Cauldron *cauldron, int grid_width, int grid_height, int scre
         -(((float)screen_height / 2) - ((float)grid_height * cell_size) / 2)};
 
     Grid active_grid = {0};
-    Grid_Init(&active_grid, grid_width, grid_height, grid_origin, cell_size);
+    if (!Grid_Init(&active_grid, grid_width, grid_height, grid_origin, cell_size))
+    {
+        TraceLog(LOG_ERROR, "Active grid not initialized. Aborting");
+        return false;
+    }
 
     int n_i = 0;
     Cell *cell = NULL;
@@ -123,8 +122,8 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
 
     TraceLog(LOG_INFO, "-----------------------------------");
 
-    int active_grid_items = 0;
-    int buffer_grid_items = 0;
+    cauldron->active_grid_ptr->count_of_active_materials = 0;
+    cauldron->buffer_grid_ptr->count_of_active_materials = 0;
 
     for (int i = 0; i < cauldron->active_grid_ptr->count_of_cells; i++)
     {
@@ -133,6 +132,7 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
         cauldron->buffer_grid_ptr->cells[i].temperature = 0;
     }
 
+    // Upside-down cells process
     for (int y = 0; y < cauldron->active_grid_ptr->height; y++)
     {
         for (int x = 0; x < cauldron->active_grid_ptr->width; x++)
@@ -143,9 +143,31 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
             {
                 continue;
             }
-            active_grid_items++;
+            cauldron->active_grid_ptr->count_of_active_materials++;
+        }
+    }
 
-            Update_Gravity(cauldron, x, y);
+    // Downside-up cells process
+    for (int y = cauldron->active_grid_ptr->height - 1; y >= 0; y--)
+    {
+        for (int x = cauldron->active_grid_ptr->width - 1; x >= 0; x--)
+        {
+            Cell *cell = Grid_GetCellAt(cauldron->active_grid_ptr, x, y);
+
+            if (cell->material == Material_GetDefinition(MATERIAL_NONE))
+            {
+                continue;
+            }
+
+            if (cell->material->gravity_strength > 0.0f)
+            {
+                Update_Gravity(cauldron, x, y);
+            }
+
+            if (cell->material->is_liquid)
+            {
+                Update_Flow(cauldron, x, y);
+            }
         }
     }
 
@@ -159,14 +181,16 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
             {
                 continue;
             }
-            buffer_grid_items++;
+            cauldron->buffer_grid_ptr->count_of_active_materials++;
         }
     }
 
     cauldron->current_duration_ms = cauldron->step_duration_ms;
 
     Cauldron_SwapBuffers(cauldron);
-    TraceLog(LOG_INFO, "Active grid items: %i, buffer grid items: %i", active_grid_items, buffer_grid_items);
+    TraceLog(LOG_INFO, "Active grid items: %i, buffer grid items: %i",
+             cauldron->active_grid_ptr->count_of_active_materials,
+             cauldron->buffer_grid_ptr->count_of_active_materials);
     TraceLog(LOG_INFO, "-----------------------------------");
 }
 
@@ -216,7 +240,7 @@ void DrawCellInfo(const Cell *cell, const int screen_width, const int screen_hei
 
 void Cauldron_DrawIngredientsBar(Cauldron *cauldron, IngredientList *ingredient_list, struct nk_context *ctx, int screen_height)
 {
-    if (nk_begin(ctx, "Add something to grid", nk_rect(20, screen_height - 148, 512, 128), NK_WINDOW_BORDER))
+    if (nk_begin(ctx, "Add something to grid", nk_rect(20, screen_height - 148, 256, 128), NK_WINDOW_BORDER))
     {
         /* fixed widget pixel width */
         nk_layout_row_dynamic(ctx, 24, 3);
@@ -224,6 +248,16 @@ void Cauldron_DrawIngredientsBar(Cauldron *cauldron, IngredientList *ingredient_
         if (nk_button_label(ctx, "Salt"))
         {
             cauldron->selected_ingredient = Ingredient_Get(ingredient_list, INGREDIENT_SALT);
+        }
+
+        if (nk_button_label(ctx, "Water"))
+        {
+            cauldron->selected_ingredient = Ingredient_Get(ingredient_list, INGREDIENT_WATER);
+        }
+
+        if (nk_button_label(ctx, "Iron"))
+        {
+            cauldron->selected_ingredient = Ingredient_Get(ingredient_list, INGREDIENT_IRON);
         }
     }
     nk_end(ctx);
@@ -278,8 +312,8 @@ static void Update_Gravity(Cauldron *cauldron, int x, int y)
         return;
     }
 
-    int next_x = cell.active_cell->x + cauldron->gravity.x;
-    int next_y = cell.active_cell->y + cauldron->gravity.y;
+    int next_x = ceil(cell.active_cell->x + cauldron->gravity.x * cell.active_cell->material->gravity_strength);
+    int next_y = ceil(cell.active_cell->y + cauldron->gravity.y * cell.active_cell->material->gravity_strength);
 
     CellPair next_cell = GetCellPair(cauldron, next_x, next_y);
 
@@ -290,7 +324,7 @@ static void Update_Gravity(Cauldron *cauldron, int x, int y)
         return;
     }
 
-    if (next_cell.active_cell->material != NULL)
+    if (next_cell.buffer_cell->material != NULL)
     {
         TraceLog(LOG_INFO, "next_cell stopped by material");
 
@@ -303,19 +337,6 @@ static void Update_Gravity(Cauldron *cauldron, int x, int y)
     Cell_CopyContent(cell.active_cell, next_cell.buffer_cell);
 }
 
-static void Update_Salt(Cauldron *cauldron, int x, int y)
+static void Update_Flow(Cauldron *cauldron, int x, int y)
 {
-    CellPair cell_pair = GetCellPair(cauldron, x, y);
-
-    if (!cell_pair.is_valid)
-    {
-        return;
-    }
-
-    // Update gravity
-    Cell *down_cell = Grid_GetCellAt(cauldron->active_grid_ptr, x, y + 1);
-    if (down_cell == NULL)
-    {
-        return;
-    }
 }
