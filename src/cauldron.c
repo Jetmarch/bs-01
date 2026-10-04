@@ -10,6 +10,8 @@
 #include "raylib.h"
 #include "material.h"
 
+#define MAX_GRAVITY_BACKTRACK_TRIES 10
+
 typedef struct CellPair
 {
     Cell *active_cell;
@@ -18,7 +20,7 @@ typedef struct CellPair
 } CellPair;
 
 static bool Cauldron_InsertIngredient(Cauldron *cauldron, Ingredient *ingredient, int x, int y);
-static bool Update_Flow(Cauldron *cauldron, int x, int y);
+static bool Update_Liquid(Cauldron *cauldron, int x, int y);
 static bool Update_Gravity(Cauldron *cauldron, int x, int y);
 static CellPair GetCellPair(Cauldron *cauldron, int x, int y);
 
@@ -122,8 +124,7 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
     {
         return;
     }
-
-    TraceLog(LOG_INFO, "-----------------------------------");
+    TraceLog(LOG_INFO, "||||||||||||||||||||||||||||||||||||||");
 
     int processed_cells_count = 0;
 
@@ -164,20 +165,44 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
             {
                 continue;
             }
+            TraceLog(LOG_INFO, "=======================================");
+
+            switch (cell->material->type)
+            {
+            case MATERIAL_IRON:
+                TraceLog(LOG_INFO, "Trying to update iron cell x: %i, y: %i", x, y);
+                break;
+            case MATERIAL_SALT:
+                TraceLog(LOG_INFO, "Trying to update salt cell x: %i, y: %i", x, y);
+                break;
+            case MATERIAL_WATER:
+                TraceLog(LOG_INFO, "Trying to update water cell x: %i, y: %i", x, y);
+                break;
+            default:
+                TraceLog(LOG_INFO, "Trying to update unknown cell x: %i, y: %i", x, y);
+            }
 
             bool moved = false;
 
-            if (cell->material->gravity_strength > 0.0f)
+            if (cell->material->is_liquid && !moved)
+            {
+                moved = Update_Liquid(cauldron, x, y);
+            }
+
+            if (cell->material->gravity_strength > 0.0f && !moved)
             {
                 moved = Update_Gravity(cauldron, x, y);
             }
 
-            if (cell->material->is_liquid && !moved)
+            if (!moved)
             {
-                moved = Update_Flow(cauldron, x, y);
+
+                Cell_CopyContent(cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, x, y));
+                TraceLog(LOG_INFO, "Cell x: %i, y: %i remained it at place", x, y);
             }
 
             processed_cells_count++;
+            TraceLog(LOG_INFO, "=======================================");
         }
     }
 
@@ -202,7 +227,7 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
              cauldron->active_grid_ptr->count_of_active_materials,
              cauldron->buffer_grid_ptr->count_of_active_materials);
     TraceLog(LOG_INFO, "Cells processed in last frame: %i", processed_cells_count);
-    TraceLog(LOG_INFO, "-----------------------------------");
+    TraceLog(LOG_INFO, "||||||||||||||||||||||||||||||||||||||");
 }
 
 void Cauldron_HandleInput(Cauldron *cauldron)
@@ -328,13 +353,11 @@ static bool TryMoveCell(Cauldron *cauldron, int from_x, int from_y, int to_x, in
 
     if (next_cell.buffer_cell == NULL)
     {
-        Cell_CopyContent(cell.active_cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, from_x, from_y));
         return false;
     }
 
     if (next_cell.buffer_cell->material != NULL)
     {
-        Cell_CopyContent(cell.active_cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, from_x, from_y));
         return false;
     }
 
@@ -354,6 +377,11 @@ static bool IsCellFree(Cauldron *cauldron, int x, int y)
         return false;
     }
 
+    if (cell.active_cell->material != NULL)
+    {
+        return false;
+    }
+
     if (cell.buffer_cell->material != NULL)
     {
         return false;
@@ -364,6 +392,9 @@ static bool IsCellFree(Cauldron *cauldron, int x, int y)
 
 static bool Update_Gravity(Cauldron *cauldron, int x, int y)
 {
+
+    TraceLog(LOG_INFO, "-----------------------------------");
+    TraceLog(LOG_INFO, "Gravity on cell: x - %i, y - %i", x, y);
 
     CellPair cell = GetCellPair(cauldron, x, y);
 
@@ -379,29 +410,49 @@ static bool Update_Gravity(Cauldron *cauldron, int x, int y)
 
     if (TryMoveCell(cauldron, x, y, next_x, next_y))
     {
+        TraceLog(LOG_INFO, "Transfer cell on first try");
+        TraceLog(LOG_INFO, "-----------------------------------");
+
         return true;
     }
-
+    int try_count = 0;
     // Trying to place cell in a previous positions until it not reaches initial position
-    while (!TryMoveCell(cauldron, x, y, next_x, next_y))
+    while ((next_x > x && next_y > y) || try_count > MAX_GRAVITY_BACKTRACK_TRIES)
     {
         next_x = next_x - cauldron->gravity.x;
         next_y = next_y - cauldron->gravity.y;
 
-        if (next_x < x || next_y < y)
+        if (TryMoveCell(cauldron, x, y, next_x, next_y))
         {
-            return false;
+            TraceLog(LOG_INFO, "Transfer cell on %i try", try_count);
+            TraceLog(LOG_INFO, "-----------------------------------");
+            return true;
         }
+        try_count++;
     }
+    TraceLog(LOG_INFO, "Already landed");
+    TraceLog(LOG_INFO, "-----------------------------------");
 
-    return true;
+    return false;
 }
 
-static bool Update_Flow(Cauldron *cauldron, int x, int y)
+static float Transfer_Amount(Cell *from, Cell *to, float amount)
+{
+    float capacity = CELL_MAX_AMOUNT - to->amount;
+
+    float transferred = fminf(amount, capacity);
+
+    from->amount -= transferred;
+    to->amount += transferred;
+
+    return transferred;
+}
+
+static bool Update_Liquid(Cauldron *cauldron, int x, int y)
 {
     // next_x = x + (-1)^n
     // ----------------
-    // (-1)^0 =  1
+    // (-1)^0 = -1
     // (-1)^1 = -1
     // (-1)^2 =  1
     // (-1)^3 = -1
@@ -413,19 +464,37 @@ static bool Update_Flow(Cauldron *cauldron, int x, int y)
     // (2 / 2) % 2 = 1
     // (3 / 2) % 2 = 1
     // ----------------
+
+    TraceLog(LOG_INFO, "-----------------------------------");
+    TraceLog(LOG_INFO, "Liquid cell: x - %i, y - %i", x, y);
+
+    int side_sign = 1;
+    if (GetRandomValue(0, 1) == 0)
+    {
+        side_sign = -1;
+    }
+
     for (int i = 0; i < 4; i++)
     {
-        int next_x = x + pow(-1, i + 1);
+        int next_x = x + pow(side_sign * 1, i + 1);
         int d = (float)i / 2;
         int next_y = y + (1 - (d % 2));
         next_x = Clamp(next_x, 0, cauldron->active_grid_ptr->width - 1);
         next_y = Clamp(next_y, 0, cauldron->active_grid_ptr->height - 1);
 
+        TraceLog(LOG_INFO, "Step %i: next_x - %i, next_y - %i", i, next_x, next_y);
+        //
+        // FIXME: when a water cell updates first, it may "leaks" on borderline with with another cell
+        //
         if (IsCellFree(cauldron, next_x, next_y))
         {
+            TraceLog(LOG_INFO, "Cell free. Transfering...");
+            TraceLog(LOG_INFO, "-----------------------------------");
             return TryMoveCell(cauldron, x, y, next_x, next_y);
         }
     }
+    TraceLog(LOG_INFO, "Nowhere to flow out");
+    TraceLog(LOG_INFO, "-----------------------------------");
 
     return false;
 }
