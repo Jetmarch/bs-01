@@ -20,7 +20,7 @@
 
 #define CELL_SIZE 15
 
-#define DURATION_STEP_S 0.1
+#define DURATION_STEP_S 2
 
 int main(void)
 {
@@ -75,7 +75,7 @@ int main(void)
 
         Cauldron_DrawIngredientsBar(&cauldron, &ingredients, ctx, screen_height);
 
-        Grid_Draw(cauldron.active_grid_ptr);
+        Grid_Draw(cauldron.active_grid_ptr, delta);
 
         if (nk_begin(ctx, "Brew", nk_rect(20, screen_height - 250, 128, 100), NK_WINDOW_BORDER))
         {

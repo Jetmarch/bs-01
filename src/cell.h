@@ -27,6 +27,7 @@ typedef struct Cell
 
     Rectangle rect;
     bool is_selected;
+    float last_time_processed;
 
     const MaterialDefinition *material;
 

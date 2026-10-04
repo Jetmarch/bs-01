@@ -77,7 +77,7 @@ bool Grid_InsertGrid(Grid *target, Grid *source, int x, int y)
     return true;
 }
 
-void Grid_Draw(Grid *grid)
+void Grid_Draw(Grid *grid, float delta)
 {
     assert(grid != NULL);
     for (int i = 0; i < grid->count_of_cells; i++)
@@ -85,6 +85,13 @@ void Grid_Draw(Grid *grid)
         Cell *cell = &grid->cells[i];
         assert(cell != NULL);
         DrawRectanglePro(cell->rect, grid->origin, 0.0, SolveCellColor(cell));
+
+        if (cell->last_time_processed > 0.0f)
+        {
+            Color highlight = (Color){253, 249, 0, 255 * cell->last_time_processed};
+            cell->last_time_processed -= delta;
+            DrawRectanglePro(cell->rect, grid->origin, 0.0, highlight);
+        }
     }
 }
 

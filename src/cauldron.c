@@ -55,6 +55,7 @@ bool Cauldron_Init(Cauldron *cauldron, int grid_width, int grid_height, int scre
             cell->rect.height = (float)cell_size;
             cell->is_selected = false;
             cell->amount = 0.0f;
+            cell->last_time_processed = 0.0f;
         }
     }
 
@@ -124,6 +125,8 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
 
     TraceLog(LOG_INFO, "-----------------------------------");
 
+    int processed_cells_count = 0;
+
     cauldron->active_grid_ptr->count_of_active_materials = 0;
     cauldron->buffer_grid_ptr->count_of_active_materials = 0;
 
@@ -132,6 +135,7 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
         cauldron->buffer_grid_ptr->cells[i].amount = 0;
         cauldron->buffer_grid_ptr->cells[i].material = NULL;
         cauldron->buffer_grid_ptr->cells[i].temperature = 0;
+        cauldron->buffer_grid_ptr->cells[i].last_time_processed = 0.0f;
     }
 
     // Upside-down cells process
@@ -172,6 +176,8 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
             {
                 moved = Update_Flow(cauldron, x, y);
             }
+
+            processed_cells_count++;
         }
     }
 
@@ -195,6 +201,7 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
     TraceLog(LOG_INFO, "Active grid items: %i, buffer grid items: %i",
              cauldron->active_grid_ptr->count_of_active_materials,
              cauldron->buffer_grid_ptr->count_of_active_materials);
+    TraceLog(LOG_INFO, "Cells processed in last frame: %i", processed_cells_count);
     TraceLog(LOG_INFO, "-----------------------------------");
 }
 
@@ -333,6 +340,8 @@ static bool TryMoveCell(Cauldron *cauldron, int from_x, int from_y, int to_x, in
 
     Cell_CopyContent(cell.active_cell, next_cell.buffer_cell);
 
+    next_cell.buffer_cell->last_time_processed = 1.0f;
+
     return true;
 }
 
@@ -409,6 +418,8 @@ static bool Update_Flow(Cauldron *cauldron, int x, int y)
         int next_x = x + pow(-1, i + 1);
         int d = (float)i / 2;
         int next_y = y + (1 - (d % 2));
+        next_x = Clamp(next_x, 0, cauldron->active_grid_ptr->width - 1);
+        next_y = Clamp(next_y, 0, cauldron->active_grid_ptr->height - 1);
 
         if (IsCellFree(cauldron, next_x, next_y))
         {
