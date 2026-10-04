@@ -390,28 +390,30 @@ static bool Update_Gravity(Cauldron *cauldron, int x, int y)
 
 static bool Update_Flow(Cauldron *cauldron, int x, int y)
 {
-    // Down left
-    if (TryMoveCell(cauldron, x, y, x - 1, y + 1))
+    // next_x = x + (-1)^n
+    // ----------------
+    // (-1)^0 =  1
+    // (-1)^1 = -1
+    // (-1)^2 =  1
+    // (-1)^3 = -1
+    // ----------------
+    // next_y = y + (1 - ((n / 2) % 2))
+    // ----------------
+    // (0 / 2) % 2 = 0
+    // (1 / 2) % 2 = 0
+    // (2 / 2) % 2 = 1
+    // (3 / 2) % 2 = 1
+    // ----------------
+    for (int i = 0; i < 4; i++)
     {
-        return true;
-    }
+        int next_x = x + pow(-1, i + 1);
+        int d = (float)i / 2;
+        int next_y = y + (1 - (d % 2));
 
-    // Down right
-    if (TryMoveCell(cauldron, x, y, x + 1, y + 1))
-    {
-        return true;
-    }
-
-    // Left
-    if (TryMoveCell(cauldron, x, y, x - 1, y))
-    {
-        return true;
-    }
-
-    // Right
-    if (TryMoveCell(cauldron, x, y, x + 1, y))
-    {
-        return true;
+        if (IsCellFree(cauldron, next_x, next_y))
+        {
+            return TryMoveCell(cauldron, x, y, next_x, next_y);
+        }
     }
 
     return false;
