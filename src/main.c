@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "rlgl.h"
 #include "external/glad.h"
+#include "log.h"
 
 #include "cauldron.h"
 
@@ -20,7 +21,7 @@
 
 #define CELL_SIZE 15
 
-#define DURATION_STEP_S 2
+#define DURATION_STEP_S .5
 
 int main(void)
 {
@@ -42,7 +43,7 @@ int main(void)
 
     if (!Cauldron_Init(&cauldron, grid_width, grid_height, screen_width, screen_height, cell_size, duration_step_s))
     {
-        TraceLog(LOG_ERROR, "Cauldron_Init error!");
+        ERROR_LOG("Cauldron_Init error!");
         CloseWindow();
         return 1;
     }
@@ -51,12 +52,12 @@ int main(void)
 
     if (!Ingredient_InitList(&ingredients))
     {
-        TraceLog(LOG_ERROR, "Ingredient_InitList error!");
+        ERROR_LOG("Ingredient_InitList error!");
         CloseWindow();
         return 1;
     }
 
-    TraceLog(LOG_INFO, "Ingredient_InitList initialized");
+    INFO_LOG("Ingredient_InitList initialized");
 
     float delta;
     float frame_time;

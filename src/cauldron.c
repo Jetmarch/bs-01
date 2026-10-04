@@ -36,7 +36,7 @@ bool Cauldron_Init(Cauldron *cauldron, int grid_width, int grid_height, int scre
     Grid active_grid = {0};
     if (!Grid_Init(&active_grid, grid_width, grid_height, grid_origin, cell_size))
     {
-        TraceLog(LOG_ERROR, "Active grid not initialized. Aborting");
+        ERROR_LOG("Active grid not initialized. Aborting");
         return false;
     }
 
@@ -92,15 +92,15 @@ void Cauldron_SwapBuffers(Cauldron *cauldron)
 
     if (cauldron->active_grid_ptr == &cauldron->active_grid)
     {
-        TraceLog(LOG_INFO, "Active grid, buffer grid");
+        INFO_LOG("Active grid, buffer grid");
     }
     else if (cauldron->active_grid_ptr == &cauldron->buffer_grid)
     {
-        TraceLog(LOG_INFO, "Buffer grid, active grid");
+        INFO_LOG("Buffer grid, active grid");
     }
     else
     {
-        TraceLog(LOG_INFO, "Unknow state of buffers");
+        INFO_LOG("Unknow state of buffers");
     }
 }
 
@@ -124,7 +124,7 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
     {
         return;
     }
-    TraceLog(LOG_INFO, "||||||||||||||||||||||||||||||||||||||");
+    INFO_LOG("||||||||||||||||||||||||||||||||||||||");
 
     int processed_cells_count = 0;
 
@@ -165,21 +165,21 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
             {
                 continue;
             }
-            TraceLog(LOG_INFO, "=======================================");
+            INFO_LOG("=======================================");
 
             switch (cell->material->type)
             {
             case MATERIAL_IRON:
-                TraceLog(LOG_INFO, "Trying to update iron cell x: %i, y: %i", x, y);
+                INFO_LOG("Trying to update iron cell x: %i, y: %i", x, y);
                 break;
             case MATERIAL_SALT:
-                TraceLog(LOG_INFO, "Trying to update salt cell x: %i, y: %i", x, y);
+                INFO_LOG("Trying to update salt cell x: %i, y: %i", x, y);
                 break;
             case MATERIAL_WATER:
-                TraceLog(LOG_INFO, "Trying to update water cell x: %i, y: %i", x, y);
+                INFO_LOG("Trying to update water cell x: %i, y: %i", x, y);
                 break;
             default:
-                TraceLog(LOG_INFO, "Trying to update unknown cell x: %i, y: %i", x, y);
+                INFO_LOG("Trying to update unknown cell x: %i, y: %i", x, y);
             }
 
             bool moved = false;
@@ -198,11 +198,11 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
             {
 
                 Cell_CopyContent(cell, Grid_GetCellAt(cauldron->buffer_grid_ptr, x, y));
-                TraceLog(LOG_INFO, "Cell x: %i, y: %i remained it at place", x, y);
+                INFO_LOG("Cell x: %i, y: %i remained it at place", x, y);
             }
 
             processed_cells_count++;
-            TraceLog(LOG_INFO, "=======================================");
+            INFO_LOG("=======================================");
         }
     }
 
@@ -223,11 +223,11 @@ void Cauldron_Update(Cauldron *cauldron, float delta)
     cauldron->current_duration_ms = cauldron->step_duration_ms;
 
     Cauldron_SwapBuffers(cauldron);
-    TraceLog(LOG_INFO, "Active grid items: %i, buffer grid items: %i",
+    INFO_LOG("Active grid items: %i, buffer grid items: %i",
              cauldron->active_grid_ptr->count_of_active_materials,
              cauldron->buffer_grid_ptr->count_of_active_materials);
-    TraceLog(LOG_INFO, "Cells processed in last frame: %i", processed_cells_count);
-    TraceLog(LOG_INFO, "||||||||||||||||||||||||||||||||||||||");
+    INFO_LOG("Cells processed in last frame: %i", processed_cells_count);
+    INFO_LOG("||||||||||||||||||||||||||||||||||||||");
 }
 
 void Cauldron_HandleInput(Cauldron *cauldron)
@@ -237,7 +237,7 @@ void Cauldron_HandleInput(Cauldron *cauldron)
     // Insert ingredient to cauldron
     if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && cauldron->selected_ingredient != NULL)
     {
-        TraceLog(LOG_INFO, "Trying to insert ingredient into cauldron");
+        INFO_LOG("Trying to insert ingredient into cauldron");
         Vector2 mouse_pos = GetMousePosition();
 
         int grid_x = (mouse_pos.x + cauldron->active_grid_ptr->origin.x) / cauldron->active_grid_ptr->cell_size;
@@ -245,11 +245,7 @@ void Cauldron_HandleInput(Cauldron *cauldron)
 
         if (!Cauldron_InsertIngredient(cauldron, cauldron->selected_ingredient, grid_x, grid_y))
         {
-            TraceLog(LOG_INFO, "Cannot insert ingredient at x:%i, y:%i", grid_x, grid_y);
-        }
-        else
-        {
-            TraceLog(LOG_INFO, "Cannot insert ingredient at x:%i, y:%i", grid_x, grid_y);
+            INFO_LOG("Cannot insert ingredient at x:%i, y:%i", grid_x, grid_y);
         }
     }
 }
@@ -393,8 +389,8 @@ static bool IsCellFree(Cauldron *cauldron, int x, int y)
 static bool Update_Gravity(Cauldron *cauldron, int x, int y)
 {
 
-    TraceLog(LOG_INFO, "-----------------------------------");
-    TraceLog(LOG_INFO, "Gravity on cell: x - %i, y - %i", x, y);
+    INFO_LOG("=======================================");
+    INFO_LOG("Gravity on cell: x - %i, y - %i", x, y);
 
     CellPair cell = GetCellPair(cauldron, x, y);
 
@@ -410,8 +406,8 @@ static bool Update_Gravity(Cauldron *cauldron, int x, int y)
 
     if (TryMoveCell(cauldron, x, y, next_x, next_y))
     {
-        TraceLog(LOG_INFO, "Transfer cell on first try");
-        TraceLog(LOG_INFO, "-----------------------------------");
+        INFO_LOG("=======================================");
+        INFO_LOG("Transfer cell on first try");
 
         return true;
     }
@@ -424,14 +420,14 @@ static bool Update_Gravity(Cauldron *cauldron, int x, int y)
 
         if (TryMoveCell(cauldron, x, y, next_x, next_y))
         {
-            TraceLog(LOG_INFO, "Transfer cell on %i try", try_count);
-            TraceLog(LOG_INFO, "-----------------------------------");
+            INFO_LOG("=======================================");
+            INFO_LOG("Transfer cell on %i try", try_count);
             return true;
         }
         try_count++;
     }
-    TraceLog(LOG_INFO, "Already landed");
-    TraceLog(LOG_INFO, "-----------------------------------");
+    INFO_LOG("=======================================");
+    INFO_LOG("Already landed");
 
     return false;
 }
@@ -465,8 +461,8 @@ static bool Update_Liquid(Cauldron *cauldron, int x, int y)
     // (3 / 2) % 2 = 1
     // ----------------
 
-    TraceLog(LOG_INFO, "-----------------------------------");
-    TraceLog(LOG_INFO, "Liquid cell: x - %i, y - %i", x, y);
+    INFO_LOG("=======================================");
+    INFO_LOG("Liquid cell: x - %i, y - %i", x, y);
 
     int side_sign = 1;
     if (GetRandomValue(0, 1) == 0)
@@ -482,19 +478,19 @@ static bool Update_Liquid(Cauldron *cauldron, int x, int y)
         next_x = Clamp(next_x, 0, cauldron->active_grid_ptr->width - 1);
         next_y = Clamp(next_y, 0, cauldron->active_grid_ptr->height - 1);
 
-        TraceLog(LOG_INFO, "Step %i: next_x - %i, next_y - %i", i, next_x, next_y);
+        INFO_LOG("Step %i: next_x - %i, next_y - %i", i, next_x, next_y);
         //
         // FIXME: when a water cell updates first, it may "leaks" on borderline with with another cell
         //
         if (IsCellFree(cauldron, next_x, next_y))
         {
-            TraceLog(LOG_INFO, "Cell free. Transfering...");
-            TraceLog(LOG_INFO, "-----------------------------------");
+            INFO_LOG("=======================================");
+            INFO_LOG("Cell free. Transfering...");
             return TryMoveCell(cauldron, x, y, next_x, next_y);
         }
     }
-    TraceLog(LOG_INFO, "Nowhere to flow out");
-    TraceLog(LOG_INFO, "-----------------------------------");
+    INFO_LOG("=======================================");
+    INFO_LOG("Nowhere to flow out");
 
     return false;
 }
